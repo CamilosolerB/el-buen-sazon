@@ -315,6 +315,14 @@
         margin: 14px 0 8px;
         font-size: 15px;
       }
+      .df .ok {
+        color: var(--ok);
+        font-weight: 600;
+      }
+      .df .err {
+        color: #c0392b;
+        font-weight: 600;
+      }
       .gq {
         margin: 28px 0 4px;
         padding: 7px 10px;
@@ -332,11 +340,6 @@
         font-size: 12.5px;
         line-height: 1.45;
       }
-      pre.mermaid {
-        background: var(--cd);
-        color: var(--tx);
-        text-align: center;
-      }
       footer {
         text-align: center;
         font: 12px sans-serif;
@@ -348,7 +351,7 @@
   <body>
     <header>
       <p>
-        Business Analitycs 801SIS · Ingeniería de Sistemas · Universidad de
+        Business Analytics 801SIS · Ingeniería de Sistemas · Universidad de
         Cundinamarca · Ing. Ivon Forero
       </p>
       <h1>
@@ -402,10 +405,20 @@
         <p>
           <b>Objetivo.</b> Registrar cada venta con su detalle de forma correcta
           y completa, para conocer qué se vende, cuándo, a quién y con qué
-          margen, y así dar un respectivo analisis completo y adaptado al negocio.
+          margen, y así dar un respectivo análisis completo y adaptado al
+          negocio.
         </p>
         <p>
-          <b>Justificación.</b> La realización de este análisis es fundamental para comprender en profundidad el comportamiento de las ventas y la dinámica de la demanda, permitiendo identificar con precisión las horas pico y los días de la semana con mayor o menor dinamismo comercial. Conocer estos patrones de consumo resulta indispensable para optimizar la operación y la atención al cliente. Asimismo, el estudio de los ingresos brutos y netos mensuales, respaldado por un control estricto de los costos de producción, proporcionará la base analítica necesaria para evaluar la rentabilidad real del negocio y respaldar una toma de decisiones estratégica y eficiente.
+          <b>Justificación.</b> La realización de este análisis es fundamental
+          para comprender en profundidad el comportamiento de las ventas y la
+          dinámica de la demanda, permitiendo identificar con precisión las
+          horas pico y los días de la semana con mayor o menor dinamismo
+          comercial. Conocer estos patrones de consumo resulta indispensable
+          para optimizar la operación y la atención al cliente. Asimismo, el
+          estudio de los ingresos brutos y netos mensuales, respaldado por un
+          control estricto de los costos de producción, proporcionará la base
+          analítica necesaria para evaluar la rentabilidad real del negocio y
+          respaldar una toma de decisiones estratégica y eficiente.
         </p>
       </section>
       <section id="s3">
@@ -417,10 +430,11 @@
           <code>costo</code> (producción, operativos y eventos) y se amplió
           <code>producto</code> con gaseosas, cervezas y acompañantes.
         </p>
+        <img src="mr.png" width="100%" alt="Diagrama entidad-relación ajustado" />
         <img
           src="mer.png"
           width="100%"
-          alt="Diagrama entidad-relación (modelo relacional ajustado)"
+          alt=" modelo relacional ajustado"
         />
         <h3>Base de datos (PostgreSQL, esquema <code>ventas</code>)</h3>
         <div class="tw">
@@ -500,9 +514,10 @@
           tipos de evento, el evento 3, los valores de los eventos y los
           productos nuevos (con sus líneas de venta) fueron simulados para
           completar el análisis de rentabilidad; por eso las conclusiones sobre
-          costos son ilustrativas. Se validaron 26 consultas SQL (resumen de
+          costos son ilustrativas. Las 26 consultas analíticas (resumen de
           ventas, por canal, día, mes y hora, clientes, empleados, productos,
-          eventos, costos y rentabilidad).
+          eventos, costos y rentabilidad) se implementaron en Python y se
+          verificaron contra las consultas SQL de la sustentación.
         </p>
         <h3>Conexión de la base de datos con Python</h3>
         <p>
@@ -510,14 +525,16 @@
           controlador <b>psycopg2</b> y <b>pandas</b>. El proceso técnico es:
           (1) crear el <i>engine</i> con las credenciales de la variable de
           entorno <code>DATABASE_URL</code> (cargada con
-          <code>python-dotenv</code>); (2) ejecutar cada consulta SQL con
-          <code>pd.read_sql</code>, que devuelve un DataFrame; (3) transformar
-          con pandas (<code>groupby</code>, <code>merge</code>,
-          <code>describe</code>) para calcular los estadísticos; (4) presentar
-          tablas, gráficos y conclusiones. Se ejecutaron 12 consultas del
-          informe y 3 adicionales del blog, además de las 26 consultas validadas
-          de la sustentación (se muestran completas más abajo), para construir
-          10 DataFrames.
+          <code>python-dotenv</code>); (2) leer las 9 tablas completas del
+          esquema <code>ventas</code> con <code>pd.read_sql</code>, que devuelve
+          un DataFrame por tabla — es el único paso con SQL, la extracción de
+          datos; (3) hacer todo el análisis con pandas (<code>groupby</code>,
+          <code>merge</code>, <code>agg</code>, <code>describe</code>), sin
+          escribir consultas SQL en el código de análisis; (4) presentar tablas,
+          gráficos y conclusiones. Se ejecutaron 12 consultas de extracción del
+          informe y 3 adicionales del blog, además de las 26 consultas
+          analíticas de la sustentación (se muestran completas más abajo), para
+          construir 10 DataFrames.
         </p>
         <div class="carbon">
           <div class="cb-top">
@@ -528,7 +545,6 @@
           <pre
             class="cb-code"
           ><code><span class="ln">1</span><span class="t-k">def</span> conectar():
-<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Prioriza DATABASE_URL (Supabase/Render/Railway); si no existe usa las variables PG*.&quot;&quot;&quot;</span>
 <span class="ln">3</span>    url = os.getenv(<span class="t-s">&quot;DATABASE_URL&quot;</span>)
 <span class="ln">4</span>    <span class="t-k">if</span> url:
 <span class="ln">5</span>        url = re.sub(r<span class="t-s">&quot;^postgres(ql)?://&quot;</span>, <span class="t-s">&quot;postgresql+psycopg2://&quot;</span>, url)
@@ -562,7 +578,9 @@
 <span class="ln">12</span>    <span class="t-k">return</span> dfs
 </code></pre>
         </div>
-        <p class="nt">Ejemplo mínimo de conexión y primera consulta:</p>
+        <p class="nt">
+          Ejemplo mínimo de conexión, extracción y primeros cálculos con pandas:
+        </p>
         <div class="carbon">
           <div class="cb-top">
             <span class="cb-dots"><i></i><i></i><i></i></span
@@ -571,28 +589,32 @@
           </div>
           <pre
             class="cb-code"
-          ><code><span class="ln">1</span><span class="t-k">from</span> sqlalchemy <span class="t-k">import</span> create_engine, text
-<span class="ln">2</span><span class="t-k">import</span> pandas <span class="t-k">as</span> pd
+          ><code><span class="ln">1</span><span class="t-k">import</span> pandas <span class="t-k">as</span> pd
+<span class="ln">2</span><span class="t-k">from</span> sqlalchemy <span class="t-k">import</span> create_engine, text
 <span class="ln">3</span>
 <span class="ln">4</span>engine = create_engine(<span class="t-s">&quot;postgresql+psycopg2://usuario:clave@localhost:5432/el_buen_sabor&quot;</span>)
 <span class="ln">5</span><span class="t-k">with</span> engine.connect() <span class="t-k">as</span> cn:
-<span class="ln">6</span>    df_ventas = pd.read_sql(text(<span class="t-s">&quot;&quot;</span>&quot;
-<span class="ln">7</span>        SELECT TO_CHAR(fecha_hora,<span class="t-s">&#x27;YYYY-MM&#x27;</span>) AS mes, tipo_venta AS canal,
-<span class="ln">8</span>               COUNT(*) AS ventas, SUM(total_venta) AS ingresos
-<span class="ln">9</span>        FROM ventas.venta GROUP BY <span class="t-n">1</span>,<span class="t-n">2</span><span class="t-s">&quot;&quot;</span>&quot;), cn)
-<span class="ln">10</span>
-<span class="ln">11</span>df_ventas.groupby(<span class="t-s">&quot;mes&quot;</span>)[[<span class="t-s">&quot;ventas&quot;</span>, <span class="t-s">&quot;ingresos&quot;</span>]].<span class="t-k">sum</span>()      <span class="t-c"># agrupar</span>
-<span class="ln">12</span>df_ventas[<span class="t-s">&quot;ingresos&quot;</span>].describe()                            <span class="t-c"># estadísticos descriptivos</span>
+<span class="ln">6</span>    venta = pd.read_sql(text(<span class="t-s">&quot;SELECT * FROM ventas.venta&quot;</span>), cn)     <span class="t-c"># extracción</span>
+<span class="ln">7</span>    detalle = pd.read_sql(text(<span class="t-s">&quot;SELECT * FROM ventas.detalle_venta&quot;</span>), cn)
+<span class="ln">8</span>
+<span class="ln">9</span>lineas = detalle.groupby(<span class="t-s">&quot;id_venta&quot;</span>).size()                         <span class="t-c"># agrupar</span>
+<span class="ln">10</span>venta = venta.merge(lineas.rename(<span class="t-s">&quot;lineas&quot;</span>), on=<span class="t-s">&quot;id_venta&quot;</span>)         <span class="t-c"># cruzar</span>
+<span class="ln">11</span>venta[<span class="t-s">&quot;mes&quot;</span>] = venta.fecha_hora.dt.to_period(<span class="t-s">&quot;M&quot;</span>)                   <span class="t-c"># derivar</span>
+<span class="ln">12</span>venta.groupby(<span class="t-s">&quot;mes&quot;</span>).agg(ventas=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;size&quot;</span>),            <span class="t-c"># indicadores</span>
+<span class="ln">13</span>                         ingresos=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;sum&quot;</span>)).describe()
 </code></pre>
         </div>
         <h3 id="qsql">
-          Consultas SQL validadas en la sustentación (26) y su resultado
+          Consultas analíticas en Python + pandas (26) y su resultado
         </h3>
         <p>
-          Las 26 consultas de <code>database/03_consultas.sql</code> se ejecutan
-          una a una contra Supabase; cada bloque muestra el código fuente y,
-          debajo, el DataFrame resultante (primeras 12 filas, con el total de
-          filas y el tiempo de ejecución).
+          Las 26 consultas de <code>database/03_consultas.sql</code> se
+          reescribieron en Python: cada bloque muestra el código pandas que se
+          ejecuta y, debajo, el DataFrame resultante (primeras 12 filas, con el
+          total de filas, el tiempo de ejecución y el sello de validación). El
+          código se corre contra Supabase y se compara fila a fila con la
+          consulta SQL original de la sustentación: las 26 coinciden en
+          columnas, filas y valores.
         </p>
         <h4 class="gq" id="g-ventas">
           Ventas y demanda <span class="nt">(5 consultas)</span>
@@ -602,22 +624,29 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_01.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> <span class="t-k">COUNT</span>(*) <span class="t-k">AS</span> cantidad_ventas,
-<span class="ln">2</span>       <span class="t-k">SUM</span>(total_venta) <span class="t-k">AS</span> ingresos_totales,
-<span class="ln">3</span>       <span class="t-k">AVG</span>(total_venta) <span class="t-k">AS</span> ticket_promedio,
-<span class="ln">4</span>       <span class="t-k">MIN</span>(fecha_hora) <span class="t-k">AS</span> primera_venta,
-<span class="ln">5</span>       <span class="t-k">MAX</span>(fecha_hora) <span class="t-k">AS</span> ultima_venta
-<span class="ln">6</span><span class="t-k">FROM</span> ventas.venta;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c01(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Resumen general: ventas, ingresos, ticket promedio y rango de fechas.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    v = t[<span class="t-s">&quot;venta&quot;</span>]
+<span class="ln">4</span>    <span class="t-k">return</span> pd.DataFrame([{
+<span class="ln">5</span>        <span class="t-s">&quot;cantidad_ventas&quot;</span>: <span class="t-k">len</span>(v),
+<span class="ln">6</span>        <span class="t-s">&quot;ingresos_totales&quot;</span>: v.total_venta.<span class="t-k">sum</span>(),
+<span class="ln">7</span>        <span class="t-s">&quot;ticket_promedio&quot;</span>: v.total_venta.mean(),
+<span class="ln">8</span>        <span class="t-s">&quot;primera_venta&quot;</span>: v.fecha_hora.<span class="t-k">min</span>(),
+<span class="ln">9</span>        <span class="t-s">&quot;ultima_venta&quot;</span>: v.fecha_hora.<span class="t-k">max</span>(),
+<span class="ln">10</span>    }])
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_01</code> · 1 fila × 5 columnas
-            · 152 ms
+            · 4 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -647,23 +676,28 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_02.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> tipo_venta,
-<span class="ln">2</span>       <span class="t-k">COUNT</span>(*) <span class="t-k">AS</span> cantidad_ventas,
-<span class="ln">3</span>       <span class="t-k">SUM</span>(total_venta) <span class="t-k">AS</span> ingresos,
-<span class="ln">4</span>       <span class="t-k">AVG</span>(total_venta) <span class="t-k">AS</span> ticket_promedio
-<span class="ln">5</span><span class="t-k">FROM</span> ventas.venta
-<span class="ln">6</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> tipo_venta
-<span class="ln">7</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> ingresos <span class="t-k">DESC</span>;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c02(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Ingresos y ticket promedio por canal de venta (Local / Domicilio).&quot;&quot;&quot;</span>
+<span class="ln">3</span>    <span class="t-k">return</span> (t[<span class="t-s">&quot;venta&quot;</span>].groupby(<span class="t-s">&quot;tipo_venta&quot;</span>)
+<span class="ln">4</span>            .agg(cantidad_ventas=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;size&quot;</span>),
+<span class="ln">5</span>                 ingresos=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;sum&quot;</span>),
+<span class="ln">6</span>                 ticket_promedio=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;mean&quot;</span>))
+<span class="ln">7</span>            .reset_index()
+<span class="ln">8</span>            .sort_values(<span class="t-s">&quot;ingresos&quot;</span>, ascending=<span class="t-k">False</span>)
+<span class="ln">9</span>            .reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_02</code> · 2 filas × 4
-            columnas · 173 ms
+            columnas · 19 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -697,22 +731,26 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_03.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> fecha_hora::date <span class="t-k">AS</span> fecha,
-<span class="ln">2</span>       <span class="t-k">COUNT</span>(*) <span class="t-k">AS</span> cantidad_ventas,
-<span class="ln">3</span>       <span class="t-k">SUM</span>(total_venta) <span class="t-k">AS</span> ingresos
-<span class="ln">4</span><span class="t-k">FROM</span> ventas.venta
-<span class="ln">5</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> fecha_hora::date
-<span class="ln">6</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> fecha;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c03(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Ventas e ingresos día por día.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    v = t[<span class="t-s">&quot;venta&quot;</span>].assign(fecha=<span class="t-k">lambda</span> d: d.fecha_hora.dt.date)
+<span class="ln">4</span>    <span class="t-k">return</span> (v.groupby(<span class="t-s">&quot;fecha&quot;</span>)
+<span class="ln">5</span>            .agg(cantidad_ventas=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;size&quot;</span>),
+<span class="ln">6</span>                 ingresos=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;sum&quot;</span>))
+<span class="ln">7</span>            .reset_index().sort_values(<span class="t-s">&quot;fecha&quot;</span>).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_03</code> · 213 filas × 3
-            columnas · 124 ms
+            columnas · 25 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -794,22 +832,26 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_04.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> <span class="t-k">DATE_TRUNC</span>(<span class="t-s">&#x27;month&#x27;</span>, fecha_hora)::date <span class="t-k">AS</span> mes,
-<span class="ln">2</span>       <span class="t-k">COUNT</span>(*) <span class="t-k">AS</span> cantidad_ventas,
-<span class="ln">3</span>       <span class="t-k">SUM</span>(total_venta) <span class="t-k">AS</span> ingresos
-<span class="ln">4</span><span class="t-k">FROM</span> ventas.venta
-<span class="ln">5</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> <span class="t-k">DATE_TRUNC</span>(<span class="t-s">&#x27;month&#x27;</span>, fecha_hora)
-<span class="ln">6</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> mes;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c04(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Ventas e ingresos por mes.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    v = t[<span class="t-s">&quot;venta&quot;</span>].assign(mes=<span class="t-k">lambda</span> d: d.fecha_hora.dt.to_period(<span class="t-s">&quot;M&quot;</span>).dt.to_timestamp())
+<span class="ln">4</span>    <span class="t-k">return</span> (v.groupby(<span class="t-s">&quot;mes&quot;</span>)
+<span class="ln">5</span>            .agg(cantidad_ventas=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;size&quot;</span>),
+<span class="ln">6</span>                 ingresos=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;sum&quot;</span>))
+<span class="ln">7</span>            .reset_index().sort_values(<span class="t-s">&quot;mes&quot;</span>).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_04</code> · 8 filas × 3
-            columnas · 103 ms
+            columnas · 18 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -870,22 +912,26 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_05.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> <span class="t-k">EXTRACT</span>(HOUR <span class="t-k">FROM</span> fecha_hora)::integer <span class="t-k">AS</span> hora,
-<span class="ln">2</span>       <span class="t-k">COUNT</span>(*) <span class="t-k">AS</span> cantidad_ventas,
-<span class="ln">3</span>       <span class="t-k">SUM</span>(total_venta) <span class="t-k">AS</span> ingresos
-<span class="ln">4</span><span class="t-k">FROM</span> ventas.venta
-<span class="ln">5</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> <span class="t-k">EXTRACT</span>(HOUR <span class="t-k">FROM</span> fecha_hora)::integer
-<span class="ln">6</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> hora;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c05(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Ventas e ingresos por hora del día.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    v = t[<span class="t-s">&quot;venta&quot;</span>].assign(hora=<span class="t-k">lambda</span> d: d.fecha_hora.dt.hour)
+<span class="ln">4</span>    <span class="t-k">return</span> (v.groupby(<span class="t-s">&quot;hora&quot;</span>)
+<span class="ln">5</span>            .agg(cantidad_ventas=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;size&quot;</span>),
+<span class="ln">6</span>                 ingresos=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;sum&quot;</span>))
+<span class="ln">7</span>            .reset_index().sort_values(<span class="t-s">&quot;hora&quot;</span>).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_05</code> · 13 filas × 3
-            columnas · 176 ms
+            columnas · 11 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -970,25 +1016,28 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_06.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> c.id_cliente,
-<span class="ln">2</span>       c.nombre,
-<span class="ln">3</span>       <span class="t-k">COUNT</span>(v.id_venta) <span class="t-k">AS</span> cantidad_ventas,
-<span class="ln">4</span>       <span class="t-k">SUM</span>(v.total_venta) <span class="t-k">AS</span> ingresos
-<span class="ln">5</span><span class="t-k">FROM</span> ventas.cliente c
-<span class="ln">6</span><span class="t-k">JOIN</span> ventas.venta v <span class="t-k">ON</span> v.id_cliente = c.id_cliente
-<span class="ln">7</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> c.id_cliente, c.nombre
-<span class="ln">8</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> ingresos <span class="t-k">DESC</span>
-<span class="ln">9</span><span class="t-k">LIMIT</span> <span class="t-n">10</span>;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c06(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Top 10 clientes por ingresos.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    <span class="t-k">return</span> (t[<span class="t-s">&quot;venta&quot;</span>].groupby(<span class="t-s">&quot;id_cliente&quot;</span>)
+<span class="ln">4</span>            .agg(cantidad_ventas=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;size&quot;</span>),
+<span class="ln">5</span>                 ingresos=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;sum&quot;</span>))
+<span class="ln">6</span>            .reset_index()
+<span class="ln">7</span>            .merge(t[<span class="t-s">&quot;cliente&quot;</span>][[<span class="t-s">&quot;id_cliente&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>]], on=<span class="t-s">&quot;id_cliente&quot;</span>)
+<span class="ln">8</span>            [[<span class="t-s">&quot;id_cliente&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>, <span class="t-s">&quot;cantidad_ventas&quot;</span>, <span class="t-s">&quot;ingresos&quot;</span>]]
+<span class="ln">9</span>            .sort_values(<span class="t-s">&quot;ingresos&quot;</span>, ascending=<span class="t-k">False</span>).head(<span class="t-n">10</span>).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_06</code> · 10 filas × 4
-            columnas · 138 ms
+            columnas · 15 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -1070,21 +1119,25 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_07.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> c.id_cliente, c.nombre, c.email
-<span class="ln">2</span><span class="t-k">FROM</span> ventas.cliente c
-<span class="ln">3</span><span class="t-k">LEFT</span> <span class="t-k">JOIN</span> ventas.venta v <span class="t-k">ON</span> v.id_cliente = c.id_cliente
-<span class="ln">4</span><span class="t-k">WHERE</span> v.id_venta <span class="t-k">IS</span> <span class="t-k">NULL</span>
-<span class="ln">5</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> c.id_cliente;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c07(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Clientes que nunca han comprado (anti-join contra la tabla venta).&quot;&quot;&quot;</span>
+<span class="ln">3</span>    con_venta = t[<span class="t-s">&quot;venta&quot;</span>].id_cliente.unique()
+<span class="ln">4</span>    <span class="t-k">return</span> (t[<span class="t-s">&quot;cliente&quot;</span>].loc[~t[<span class="t-s">&quot;cliente&quot;</span>].id_cliente.isin(con_venta),
+<span class="ln">5</span>                             [<span class="t-s">&quot;id_cliente&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>, <span class="t-s">&quot;email&quot;</span>]]
+<span class="ln">6</span>            .sort_values(<span class="t-s">&quot;id_cliente&quot;</span>).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_07</code> · 0 filas × 3
-            columnas · 110 ms
+            columnas · 3 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -1110,26 +1163,30 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_08.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> e.id_empleado,
-<span class="ln">2</span>       e.nombre,
-<span class="ln">3</span>       e.cargo,
-<span class="ln">4</span>       <span class="t-k">COUNT</span>(v.id_venta) <span class="t-k">AS</span> ventas_registradas,
-<span class="ln">5</span>       <span class="t-k">SUM</span>(v.total_venta) <span class="t-k">AS</span> ingresos_gestionados,
-<span class="ln">6</span>       <span class="t-k">AVG</span>(v.total_venta) <span class="t-k">AS</span> ticket_promedio
-<span class="ln">7</span><span class="t-k">FROM</span> ventas.empleado e
-<span class="ln">8</span><span class="t-k">LEFT</span> <span class="t-k">JOIN</span> ventas.venta v <span class="t-k">ON</span> v.id_empleado = e.id_empleado
-<span class="ln">9</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> e.id_empleado, e.nombre, e.cargo
-<span class="ln">10</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> ingresos_gestionados <span class="t-k">DESC</span> NULLS LAST;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c08(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Ventas e ingresos gestionados por cada empleado (outer join a la izquierda).&quot;&quot;&quot;</span>
+<span class="ln">3</span>    g = (t[<span class="t-s">&quot;venta&quot;</span>].groupby(<span class="t-s">&quot;id_empleado&quot;</span>)
+<span class="ln">4</span>         .agg(ventas_registradas=(<span class="t-s">&quot;id_venta&quot;</span>, <span class="t-s">&quot;size&quot;</span>),
+<span class="ln">5</span>              ingresos_gestionados=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;sum&quot;</span>),
+<span class="ln">6</span>              ticket_promedio=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;mean&quot;</span>)))
+<span class="ln">7</span>    r = t[<span class="t-s">&quot;empleado&quot;</span>].merge(g, on=<span class="t-s">&quot;id_empleado&quot;</span>, how=<span class="t-s">&quot;left&quot;</span>)
+<span class="ln">8</span>    r[[<span class="t-s">&quot;ventas_registradas&quot;</span>, <span class="t-s">&quot;ingresos_gestionados&quot;</span>]] = r[[<span class="t-s">&quot;ventas_registradas&quot;</span>, <span class="t-s">&quot;ingresos_gestionados&quot;</span>]].fillna(<span class="t-n">0</span>)
+<span class="ln">9</span>    <span class="t-k">return</span> (r[[<span class="t-s">&quot;id_empleado&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>, <span class="t-s">&quot;cargo&quot;</span>, <span class="t-s">&quot;ventas_registradas&quot;</span>, <span class="t-s">&quot;ingresos_gestionados&quot;</span>, <span class="t-s">&quot;ticket_promedio&quot;</span>]]
+<span class="ln">10</span>            .sort_values(<span class="t-s">&quot;ingresos_gestionados&quot;</span>, ascending=<span class="t-k">False</span>, na_position=<span class="t-s">&quot;last&quot;</span>)
+<span class="ln">11</span>            .reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_08</code> · 6 filas × 6
-            columnas · 142 ms
+            columnas · 14 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -1203,36 +1260,31 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_13.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span>WITH compras_cliente <span class="t-k">AS</span> (
-<span class="ln">2</span>    <span class="t-k">SELECT</span> id_cliente, <span class="t-k">COUNT</span>(*) <span class="t-k">AS</span> compras
-<span class="ln">3</span>    <span class="t-k">FROM</span> ventas.venta
-<span class="ln">4</span>    <span class="t-k">GROUP</span> <span class="t-k">BY</span> id_cliente
-<span class="ln">5</span>), clasificacion <span class="t-k">AS</span> (
-<span class="ln">6</span>    <span class="t-c">-- El modelo relacional no almacena el atributo cliente_frecuente:</span>
-<span class="ln">7</span>    <span class="t-c">-- se deriva como cliente con 100 o más ventas registradas.</span>
-<span class="ln">8</span>    <span class="t-k">SELECT</span> c.id_cliente,
-<span class="ln">9</span>           (<span class="t-k">COALESCE</span>(k.compras, <span class="t-n">0</span>) &gt;= <span class="t-n">100</span>) <span class="t-k">AS</span> cliente_frecuente
-<span class="ln">10</span>    <span class="t-k">FROM</span> ventas.cliente c
-<span class="ln">11</span>    <span class="t-k">LEFT</span> <span class="t-k">JOIN</span> compras_cliente k <span class="t-k">ON</span> k.id_cliente = c.id_cliente
-<span class="ln">12</span>)
-<span class="ln">13</span><span class="t-k">SELECT</span> cl.cliente_frecuente,
-<span class="ln">14</span>       <span class="t-k">COUNT</span>(v.id_venta) <span class="t-k">AS</span> cantidad_ventas,
-<span class="ln">15</span>       <span class="t-k">AVG</span>(v.total_venta) <span class="t-k">AS</span> ticket_promedio,
-<span class="ln">16</span>       <span class="t-k">SUM</span>(v.total_venta) <span class="t-k">AS</span> ingresos
-<span class="ln">17</span><span class="t-k">FROM</span> clasificacion cl
-<span class="ln">18</span><span class="t-k">JOIN</span> ventas.venta v <span class="t-k">ON</span> v.id_cliente = cl.id_cliente
-<span class="ln">19</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> cl.cliente_frecuente
-<span class="ln">20</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> cl.cliente_frecuente <span class="t-k">DESC</span>;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c13(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Ticket promedio según cliente frecuente (100 o más compras).&quot;&quot;&quot;</span>
+<span class="ln">3</span>    compras = t[<span class="t-s">&quot;venta&quot;</span>].groupby(<span class="t-s">&quot;id_cliente&quot;</span>).size()
+<span class="ln">4</span>    cl = t[<span class="t-s">&quot;cliente&quot;</span>].assign(compras=<span class="t-k">lambda</span> d: d.id_cliente.map(compras).fillna(<span class="t-n">0</span>))
+<span class="ln">5</span>    cl[<span class="t-s">&quot;cliente_frecuente&quot;</span>] = cl.compras &gt;= <span class="t-n">100</span>          <span class="t-c"># atributo derivado, no existe en la tabla</span>
+<span class="ln">6</span>    <span class="t-k">return</span> (t[<span class="t-s">&quot;venta&quot;</span>].merge(cl[[<span class="t-s">&quot;id_cliente&quot;</span>, <span class="t-s">&quot;cliente_frecuente&quot;</span>]], on=<span class="t-s">&quot;id_cliente&quot;</span>)
+<span class="ln">7</span>            .groupby(<span class="t-s">&quot;cliente_frecuente&quot;</span>)
+<span class="ln">8</span>            .agg(cantidad_ventas=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;size&quot;</span>),
+<span class="ln">9</span>                 ticket_promedio=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;mean&quot;</span>),
+<span class="ln">10</span>                 ingresos=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;sum&quot;</span>))
+<span class="ln">11</span>            .reset_index()
+<span class="ln">12</span>            .sort_values(<span class="t-s">&quot;cliente_frecuente&quot;</span>, ascending=<span class="t-k">False</span>).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_13</code> · 2 filas × 4
-            columnas · 306 ms
+            columnas · 15 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -1269,29 +1321,27 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_14.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> cantidad_lineas,
-<span class="ln">2</span>       <span class="t-k">COUNT</span>(*) <span class="t-k">AS</span> cantidad_ventas,
-<span class="ln">3</span>       <span class="t-k">AVG</span>(total_venta) <span class="t-k">AS</span> ticket_promedio
-<span class="ln">4</span><span class="t-k">FROM</span> (
-<span class="ln">5</span>    <span class="t-k">SELECT</span> v.id_venta,
-<span class="ln">6</span>           v.total_venta,
-<span class="ln">7</span>           <span class="t-k">COUNT</span>(d.id_detalle) <span class="t-k">AS</span> cantidad_lineas
-<span class="ln">8</span>    <span class="t-k">FROM</span> ventas.venta v
-<span class="ln">9</span>    <span class="t-k">JOIN</span> ventas.detalle_venta d <span class="t-k">ON</span> d.id_venta = v.id_venta
-<span class="ln">10</span>    <span class="t-k">GROUP</span> <span class="t-k">BY</span> v.id_venta, v.total_venta
-<span class="ln">11</span>) x
-<span class="ln">12</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> cantidad_lineas
-<span class="ln">13</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> cantidad_lineas;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c14(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Distribución de las ventas según la cantidad de líneas de detalle.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    lineas = t[<span class="t-s">&quot;detalle_venta&quot;</span>].groupby(<span class="t-s">&quot;id_venta&quot;</span>).size().rename(<span class="t-s">&quot;cantidad_lineas&quot;</span>)
+<span class="ln">4</span>    v = t[<span class="t-s">&quot;venta&quot;</span>].merge(lineas, on=<span class="t-s">&quot;id_venta&quot;</span>)
+<span class="ln">5</span>    <span class="t-k">return</span> (v.groupby(<span class="t-s">&quot;cantidad_lineas&quot;</span>)
+<span class="ln">6</span>            .agg(cantidad_ventas=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;size&quot;</span>),
+<span class="ln">7</span>                 ticket_promedio=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;mean&quot;</span>))
+<span class="ln">8</span>            .reset_index().sort_values(<span class="t-s">&quot;cantidad_lineas&quot;</span>).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_14</code> · 7 filas × 3
-            columnas · 241 ms
+            columnas · 14 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -1349,26 +1399,31 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_15.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> c.nombre,
-<span class="ln">2</span>       d.direccion_entrega,
-<span class="ln">3</span>       <span class="t-k">COUNT</span>(v.id_venta) <span class="t-k">AS</span> domicilios,
-<span class="ln">4</span>       <span class="t-k">SUM</span>(v.total_venta) <span class="t-k">AS</span> ingresos
-<span class="ln">5</span><span class="t-k">FROM</span> ventas.venta v
-<span class="ln">6</span><span class="t-k">JOIN</span> ventas.domicilio d <span class="t-k">ON</span> d.id_domicilio = v.id_domicilio
-<span class="ln">7</span><span class="t-k">JOIN</span> ventas.cliente c <span class="t-k">ON</span> c.id_cliente = v.id_cliente
-<span class="ln">8</span><span class="t-k">WHERE</span> v.tipo_venta = <span class="t-s">&#x27;Domicilio&#x27;</span>
-<span class="ln">9</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> c.nombre, d.direccion_entrega
-<span class="ln">10</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> domicilios <span class="t-k">DESC</span>, ingresos <span class="t-k">DESC</span>;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c15(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Ventas a domicilio agrupadas por cliente y dirección de entrega.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    v = t[<span class="t-s">&quot;venta&quot;</span>].loc[<span class="t-k">lambda</span> d: d.tipo_venta == <span class="t-s">&quot;Domicilio&quot;</span>,
+<span class="ln">4</span>                       [<span class="t-s">&quot;id_cliente&quot;</span>, <span class="t-s">&quot;id_domicilio&quot;</span>, <span class="t-s">&quot;total_venta&quot;</span>]]
+<span class="ln">5</span>    <span class="t-k">return</span> (v.merge(t[<span class="t-s">&quot;domicilio&quot;</span>][[<span class="t-s">&quot;id_domicilio&quot;</span>, <span class="t-s">&quot;direccion_entrega&quot;</span>]], on=<span class="t-s">&quot;id_domicilio&quot;</span>)
+<span class="ln">6</span>            .merge(t[<span class="t-s">&quot;cliente&quot;</span>][[<span class="t-s">&quot;id_cliente&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>]], on=<span class="t-s">&quot;id_cliente&quot;</span>)
+<span class="ln">7</span>            .groupby([<span class="t-s">&quot;nombre&quot;</span>, <span class="t-s">&quot;direccion_entrega&quot;</span>])
+<span class="ln">8</span>            .agg(domicilios=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;size&quot;</span>),
+<span class="ln">9</span>                 ingresos=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;sum&quot;</span>))
+<span class="ln">10</span>            .reset_index()
+<span class="ln">11</span>            .sort_values([<span class="t-s">&quot;domicilios&quot;</span>, <span class="t-s">&quot;ingresos&quot;</span>], ascending=[<span class="t-k">False</span>, <span class="t-k">False</span>])
+<span class="ln">12</span>            .reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_15</code> · 8 filas × 4
-            columnas · 155 ms
+            columnas · 14 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -1464,36 +1519,31 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_16.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span>WITH compras_cliente <span class="t-k">AS</span> (
-<span class="ln">2</span>    <span class="t-k">SELECT</span> id_cliente, <span class="t-k">COUNT</span>(*) <span class="t-k">AS</span> compras
-<span class="ln">3</span>    <span class="t-k">FROM</span> ventas.venta
-<span class="ln">4</span>    <span class="t-k">GROUP</span> <span class="t-k">BY</span> id_cliente
-<span class="ln">5</span>), clasificacion <span class="t-k">AS</span> (
-<span class="ln">6</span>    <span class="t-c">-- El modelo relacional no almacena el atributo cliente_frecuente:</span>
-<span class="ln">7</span>    <span class="t-c">-- se deriva como cliente con 100 o más ventas registradas.</span>
-<span class="ln">8</span>    <span class="t-k">SELECT</span> c.id_cliente,
-<span class="ln">9</span>           (<span class="t-k">COALESCE</span>(k.compras, <span class="t-n">0</span>) &gt;= <span class="t-n">100</span>) <span class="t-k">AS</span> cliente_frecuente
-<span class="ln">10</span>    <span class="t-k">FROM</span> ventas.cliente c
-<span class="ln">11</span>    <span class="t-k">LEFT</span> <span class="t-k">JOIN</span> compras_cliente k <span class="t-k">ON</span> k.id_cliente = c.id_cliente
-<span class="ln">12</span>)
-<span class="ln">13</span><span class="t-k">SELECT</span> cl.cliente_frecuente,
-<span class="ln">14</span>       v.tipo_venta,
-<span class="ln">15</span>       <span class="t-k">COUNT</span>(*) <span class="t-k">AS</span> cantidad_ventas,
-<span class="ln">16</span>       <span class="t-k">SUM</span>(v.total_venta) <span class="t-k">AS</span> ingresos
-<span class="ln">17</span><span class="t-k">FROM</span> ventas.venta v
-<span class="ln">18</span><span class="t-k">JOIN</span> clasificacion cl <span class="t-k">ON</span> cl.id_cliente = v.id_cliente
-<span class="ln">19</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> cl.cliente_frecuente, v.tipo_venta
-<span class="ln">20</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> cl.cliente_frecuente <span class="t-k">DESC</span>, ingresos <span class="t-k">DESC</span>;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c16(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Ingresos por canal comparando clientes frecuentes y no frecuentes.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    compras = t[<span class="t-s">&quot;venta&quot;</span>].groupby(<span class="t-s">&quot;id_cliente&quot;</span>).size()
+<span class="ln">4</span>    cl = t[<span class="t-s">&quot;cliente&quot;</span>].assign(compras=<span class="t-k">lambda</span> d: d.id_cliente.map(compras).fillna(<span class="t-n">0</span>))
+<span class="ln">5</span>    cl[<span class="t-s">&quot;cliente_frecuente&quot;</span>] = cl.compras &gt;= <span class="t-n">100</span>
+<span class="ln">6</span>    <span class="t-k">return</span> (t[<span class="t-s">&quot;venta&quot;</span>].merge(cl[[<span class="t-s">&quot;id_cliente&quot;</span>, <span class="t-s">&quot;cliente_frecuente&quot;</span>]], on=<span class="t-s">&quot;id_cliente&quot;</span>)
+<span class="ln">7</span>            .groupby([<span class="t-s">&quot;cliente_frecuente&quot;</span>, <span class="t-s">&quot;tipo_venta&quot;</span>])
+<span class="ln">8</span>            .agg(cantidad_ventas=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;size&quot;</span>),
+<span class="ln">9</span>                 ingresos=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;sum&quot;</span>))
+<span class="ln">10</span>            .reset_index()
+<span class="ln">11</span>            .sort_values([<span class="t-s">&quot;cliente_frecuente&quot;</span>, <span class="t-s">&quot;ingresos&quot;</span>], ascending=[<span class="t-k">False</span>, <span class="t-k">False</span>])
+<span class="ln">12</span>            .reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_16</code> · 3 filas × 4
-            columnas · 115 ms
+            columnas · 18 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -1536,25 +1586,28 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_09.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> p.id_producto,
-<span class="ln">2</span>       p.nombre,
-<span class="ln">3</span>       p.categoria,
-<span class="ln">4</span>       <span class="t-k">SUM</span>(d.cantidad) <span class="t-k">AS</span> unidades_vendidas,
-<span class="ln">5</span>       <span class="t-k">SUM</span>(d.subtotal) <span class="t-k">AS</span> ingresos
-<span class="ln">6</span><span class="t-k">FROM</span> ventas.producto p
-<span class="ln">7</span><span class="t-k">JOIN</span> ventas.detalle_venta d <span class="t-k">ON</span> d.id_producto = p.id_producto
-<span class="ln">8</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> p.id_producto, p.nombre, p.categoria
-<span class="ln">9</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> unidades_vendidas <span class="t-k">DESC</span>, ingresos <span class="t-k">DESC</span>;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c09(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Productos más vendidos por unidades y por ingresos.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    <span class="t-k">return</span> (t[<span class="t-s">&quot;producto&quot;</span>].merge(t[<span class="t-s">&quot;detalle_venta&quot;</span>], on=<span class="t-s">&quot;id_producto&quot;</span>)
+<span class="ln">4</span>            .groupby([<span class="t-s">&quot;id_producto&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>, <span class="t-s">&quot;categoria&quot;</span>])
+<span class="ln">5</span>            .agg(unidades_vendidas=(<span class="t-s">&quot;cantidad&quot;</span>, <span class="t-s">&quot;sum&quot;</span>),
+<span class="ln">6</span>                 ingresos=(<span class="t-s">&quot;subtotal&quot;</span>, <span class="t-s">&quot;sum&quot;</span>))
+<span class="ln">7</span>            .reset_index()
+<span class="ln">8</span>            .sort_values([<span class="t-s">&quot;unidades_vendidas&quot;</span>, <span class="t-s">&quot;ingresos&quot;</span>], ascending=[<span class="t-k">False</span>, <span class="t-k">False</span>])
+<span class="ln">9</span>            .reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_09</code> · 16 filas × 5
-            columnas · 124 ms
+            columnas · 50 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -1632,15 +1685,15 @@
                   <td>1.950.000,00</td>
                 </tr>
                 <tr>
-                  <td>14</td>
-                  <td>Patacones</td>
+                  <td>13</td>
+                  <td>Papas Fritas</td>
                   <td>Acompañante</td>
                   <td>436</td>
                   <td>2.180.000,00</td>
                 </tr>
                 <tr>
-                  <td>13</td>
-                  <td>Papas Fritas</td>
+                  <td>14</td>
+                  <td>Patacones</td>
                   <td>Acompañante</td>
                   <td>436</td>
                   <td>2.180.000,00</td>
@@ -1662,24 +1715,26 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_10.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> p.id_producto,
-<span class="ln">2</span>       p.nombre,
-<span class="ln">3</span>       <span class="t-k">SUM</span>(d.subtotal) <span class="t-k">AS</span> ingresos
-<span class="ln">4</span><span class="t-k">FROM</span> ventas.producto p
-<span class="ln">5</span><span class="t-k">JOIN</span> ventas.detalle_venta d <span class="t-k">ON</span> d.id_producto = p.id_producto
-<span class="ln">6</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> p.id_producto, p.nombre
-<span class="ln">7</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> ingresos <span class="t-k">DESC</span>
-<span class="ln">8</span><span class="t-k">LIMIT</span> <span class="t-n">1</span>;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c10(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Producto líder por ingresos (el de mayor facturación).&quot;&quot;&quot;</span>
+<span class="ln">3</span>    <span class="t-k">return</span> (t[<span class="t-s">&quot;producto&quot;</span>].merge(t[<span class="t-s">&quot;detalle_venta&quot;</span>], on=<span class="t-s">&quot;id_producto&quot;</span>)
+<span class="ln">4</span>            .groupby([<span class="t-s">&quot;id_producto&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>])
+<span class="ln">5</span>            .agg(ingresos=(<span class="t-s">&quot;subtotal&quot;</span>, <span class="t-s">&quot;sum&quot;</span>))
+<span class="ln">6</span>            .reset_index()
+<span class="ln">7</span>            .sort_values(<span class="t-s">&quot;ingresos&quot;</span>, ascending=<span class="t-k">False</span>).head(<span class="t-n">1</span>).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_10</code> · 1 fila × 3 columnas
-            · 111 ms
+            · 48 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -1707,27 +1762,28 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_11.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span>WITH ingresos <span class="t-k">AS</span> (
-<span class="ln">2</span>    <span class="t-k">SELECT</span> <span class="t-k">SUM</span>(subtotal) <span class="t-k">AS</span> total <span class="t-k">FROM</span> ventas.detalle_venta
-<span class="ln">3</span>)
-<span class="ln">4</span><span class="t-k">SELECT</span> p.nombre,
-<span class="ln">5</span>       <span class="t-k">SUM</span>(d.subtotal) <span class="t-k">AS</span> ingresos_producto,
-<span class="ln">6</span>       <span class="t-k">ROUND</span>(<span class="t-n">100.0</span> * <span class="t-k">SUM</span>(d.subtotal) / NULLIF(i.total, <span class="t-n">0</span>), <span class="t-n">2</span>) <span class="t-k">AS</span> participacion_pct
-<span class="ln">7</span><span class="t-k">FROM</span> ventas.producto p
-<span class="ln">8</span><span class="t-k">JOIN</span> ventas.detalle_venta d <span class="t-k">ON</span> d.id_producto = p.id_producto
-<span class="ln">9</span>CROSS <span class="t-k">JOIN</span> ingresos i
-<span class="ln">10</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> p.nombre, i.total
-<span class="ln">11</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> participacion_pct <span class="t-k">DESC</span>;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c11(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Participación porcentual de cada producto en los ingresos totales.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    d = t[<span class="t-s">&quot;detalle_venta&quot;</span>]
+<span class="ln">4</span>    r = (d.merge(t[<span class="t-s">&quot;producto&quot;</span>][[<span class="t-s">&quot;id_producto&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>]], on=<span class="t-s">&quot;id_producto&quot;</span>)
+<span class="ln">5</span>         .groupby(<span class="t-s">&quot;nombre&quot;</span>)
+<span class="ln">6</span>         .agg(ingresos_producto=(<span class="t-s">&quot;subtotal&quot;</span>, <span class="t-s">&quot;sum&quot;</span>))
+<span class="ln">7</span>         .reset_index())
+<span class="ln">8</span>    r[<span class="t-s">&quot;participacion_pct&quot;</span>] = (<span class="t-n">100</span> * r.ingresos_producto / d.subtotal.<span class="t-k">sum</span>()).<span class="t-k">round</span>(<span class="t-n">2</span>)
+<span class="ln">9</span>    <span class="t-k">return</span> r.sort_values(<span class="t-s">&quot;participacion_pct&quot;</span>, ascending=<span class="t-k">False</span>).reset_index(drop=<span class="t-k">True</span>)
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_11</code> · 16 filas × 3
-            columnas · 207 ms
+            columnas · 16 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -1809,24 +1865,28 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_12.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> p.categoria,
-<span class="ln">2</span>       <span class="t-k">SUM</span>(d.cantidad) <span class="t-k">AS</span> unidades_vendidas,
-<span class="ln">3</span>       <span class="t-k">COUNT</span>(<span class="t-k">DISTINCT</span> d.id_venta) <span class="t-k">AS</span> ventas_con_categoria,
-<span class="ln">4</span>       <span class="t-k">SUM</span>(d.subtotal) <span class="t-k">AS</span> ingresos
-<span class="ln">5</span><span class="t-k">FROM</span> ventas.producto p
-<span class="ln">6</span><span class="t-k">JOIN</span> ventas.detalle_venta d <span class="t-k">ON</span> d.id_producto = p.id_producto
-<span class="ln">7</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> p.categoria
-<span class="ln">8</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> ingresos <span class="t-k">DESC</span>;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c12(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Rendimiento por categoría: unidades, ventas que la incluyen e ingresos.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    <span class="t-k">return</span> (t[<span class="t-s">&quot;producto&quot;</span>].merge(t[<span class="t-s">&quot;detalle_venta&quot;</span>], on=<span class="t-s">&quot;id_producto&quot;</span>)
+<span class="ln">4</span>            .groupby(<span class="t-s">&quot;categoria&quot;</span>)
+<span class="ln">5</span>            .agg(unidades_vendidas=(<span class="t-s">&quot;cantidad&quot;</span>, <span class="t-s">&quot;sum&quot;</span>),
+<span class="ln">6</span>                 ventas_con_categoria=(<span class="t-s">&quot;id_venta&quot;</span>, <span class="t-s">&quot;nunique&quot;</span>),
+<span class="ln">7</span>                 ingresos=(<span class="t-s">&quot;subtotal&quot;</span>, <span class="t-s">&quot;sum&quot;</span>))
+<span class="ln">8</span>            .reset_index()
+<span class="ln">9</span>            .sort_values(<span class="t-s">&quot;ingresos&quot;</span>, ascending=<span class="t-k">False</span>).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_12</code> · 5 filas × 4
-            columnas · 613 ms
+            columnas · 20 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -1878,21 +1938,25 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_17.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> p.id_producto, p.nombre, p.categoria, p.precio_venta
-<span class="ln">2</span><span class="t-k">FROM</span> ventas.producto p
-<span class="ln">3</span><span class="t-k">LEFT</span> <span class="t-k">JOIN</span> ventas.detalle_venta d <span class="t-k">ON</span> d.id_producto = p.id_producto
-<span class="ln">4</span><span class="t-k">WHERE</span> d.id_detalle <span class="t-k">IS</span> <span class="t-k">NULL</span>
-<span class="ln">5</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> p.id_producto;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c17(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Productos que nunca se han vendido.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    vendidos = t[<span class="t-s">&quot;detalle_venta&quot;</span>].id_producto.unique()
+<span class="ln">4</span>    <span class="t-k">return</span> (t[<span class="t-s">&quot;producto&quot;</span>].loc[~t[<span class="t-s">&quot;producto&quot;</span>].id_producto.isin(vendidos),
+<span class="ln">5</span>                              [<span class="t-s">&quot;id_producto&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>, <span class="t-s">&quot;categoria&quot;</span>, <span class="t-s">&quot;precio_venta&quot;</span>]]
+<span class="ln">6</span>            .sort_values(<span class="t-s">&quot;id_producto&quot;</span>).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_17</code> · 0 filas × 4
-            columnas · 149 ms
+            columnas · 5 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -1922,25 +1986,26 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_18.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> v.id_venta,
-<span class="ln">2</span>       v.total_venta,
-<span class="ln">3</span>       <span class="t-k">SUM</span>(d.subtotal) <span class="t-k">AS</span> total_detalle,
-<span class="ln">4</span>       v.total_venta - <span class="t-k">SUM</span>(d.subtotal) <span class="t-k">AS</span> diferencia
-<span class="ln">5</span><span class="t-k">FROM</span> ventas.venta v
-<span class="ln">6</span><span class="t-k">JOIN</span> ventas.detalle_venta d <span class="t-k">ON</span> d.id_venta = v.id_venta
-<span class="ln">7</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> v.id_venta, v.total_venta
-<span class="ln">8</span>HAVING v.total_venta &lt;&gt; <span class="t-k">SUM</span>(d.subtotal)
-<span class="ln">9</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> ABS(v.total_venta - <span class="t-k">SUM</span>(d.subtotal)) <span class="t-k">DESC</span>;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c18(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Ventas cuyo total no coincide con la suma de sus líneas de detalle.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    d = t[<span class="t-s">&quot;detalle_venta&quot;</span>].groupby(<span class="t-s">&quot;id_venta&quot;</span>).agg(total_detalle=(<span class="t-s">&quot;subtotal&quot;</span>, <span class="t-s">&quot;sum&quot;</span>))
+<span class="ln">4</span>    r = t[<span class="t-s">&quot;venta&quot;</span>][[<span class="t-s">&quot;id_venta&quot;</span>, <span class="t-s">&quot;total_venta&quot;</span>]].merge(d, on=<span class="t-s">&quot;id_venta&quot;</span>)
+<span class="ln">5</span>    r[<span class="t-s">&quot;diferencia&quot;</span>] = r.total_venta - r.total_detalle
+<span class="ln">6</span>    r = r.loc[r.total_venta != r.total_detalle]
+<span class="ln">7</span>    <span class="t-k">return</span> r.sort_values(<span class="t-s">&quot;diferencia&quot;</span>, key=<span class="t-k">lambda</span> s: s.<span class="t-k">abs</span>(), ascending=<span class="t-k">False</span>).reset_index(drop=<span class="t-k">True</span>)
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_18</code> · 0 filas × 4
-            columnas · 218 ms
+            columnas · 20 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -1970,36 +2035,31 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_19.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span>WITH eventos_cliente <span class="t-k">AS</span> (
-<span class="ln">2</span>    <span class="t-k">SELECT</span> id_cliente, <span class="t-k">COUNT</span>(*) <span class="t-k">AS</span> eventos_reservados
-<span class="ln">3</span>    <span class="t-k">FROM</span> ventas.evento
-<span class="ln">4</span>    <span class="t-k">GROUP</span> <span class="t-k">BY</span> id_cliente
-<span class="ln">5</span>), ventas_cliente <span class="t-k">AS</span> (
-<span class="ln">6</span>    <span class="t-k">SELECT</span> id_cliente,
-<span class="ln">7</span>           <span class="t-k">COUNT</span>(*) <span class="t-k">AS</span> cantidad_ventas,
-<span class="ln">8</span>           <span class="t-k">COALESCE</span>(<span class="t-k">SUM</span>(total_venta), <span class="t-n">0</span>) <span class="t-k">AS</span> ingresos
-<span class="ln">9</span>    <span class="t-k">FROM</span> ventas.venta
-<span class="ln">10</span>    <span class="t-k">GROUP</span> <span class="t-k">BY</span> id_cliente
-<span class="ln">11</span>)
-<span class="ln">12</span><span class="t-k">SELECT</span> c.id_cliente,
-<span class="ln">13</span>       c.nombre,
-<span class="ln">14</span>       e.eventos_reservados,
-<span class="ln">15</span>       <span class="t-k">COALESCE</span>(v.cantidad_ventas, <span class="t-n">0</span>) <span class="t-k">AS</span> cantidad_ventas,
-<span class="ln">16</span>       <span class="t-k">COALESCE</span>(v.ingresos, <span class="t-n">0</span>) <span class="t-k">AS</span> ingresos
-<span class="ln">17</span><span class="t-k">FROM</span> ventas.cliente c
-<span class="ln">18</span><span class="t-k">JOIN</span> eventos_cliente e <span class="t-k">ON</span> e.id_cliente = c.id_cliente
-<span class="ln">19</span><span class="t-k">LEFT</span> <span class="t-k">JOIN</span> ventas_cliente v <span class="t-k">ON</span> v.id_cliente = c.id_cliente
-<span class="ln">20</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> eventos_reservados <span class="t-k">DESC</span>, ingresos <span class="t-k">DESC</span>;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c19(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Clientes con eventos reservados y sus compras.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    ev = t[<span class="t-s">&quot;evento&quot;</span>].groupby(<span class="t-s">&quot;id_cliente&quot;</span>).size().rename(<span class="t-s">&quot;eventos_reservados&quot;</span>)
+<span class="ln">4</span>    vc = (t[<span class="t-s">&quot;venta&quot;</span>].groupby(<span class="t-s">&quot;id_cliente&quot;</span>)
+<span class="ln">5</span>          .agg(cantidad_ventas=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;size&quot;</span>),
+<span class="ln">6</span>               ingresos=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;sum&quot;</span>)))
+<span class="ln">7</span>    r = (t[<span class="t-s">&quot;cliente&quot;</span>].merge(ev, on=<span class="t-s">&quot;id_cliente&quot;</span>)
+<span class="ln">8</span>         .merge(vc, on=<span class="t-s">&quot;id_cliente&quot;</span>, how=<span class="t-s">&quot;left&quot;</span>)
+<span class="ln">9</span>         .fillna({<span class="t-s">&quot;cantidad_ventas&quot;</span>: <span class="t-n">0</span>, <span class="t-s">&quot;ingresos&quot;</span>: <span class="t-n">0</span>}))
+<span class="ln">10</span>    <span class="t-k">return</span> (r[[<span class="t-s">&quot;id_cliente&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>, <span class="t-s">&quot;eventos_reservados&quot;</span>, <span class="t-s">&quot;cantidad_ventas&quot;</span>, <span class="t-s">&quot;ingresos&quot;</span>]]
+<span class="ln">11</span>            .sort_values([<span class="t-s">&quot;eventos_reservados&quot;</span>, <span class="t-s">&quot;ingresos&quot;</span>], ascending=[<span class="t-k">False</span>, <span class="t-k">False</span>])
+<span class="ln">12</span>            .reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_19</code> · 3 filas × 5
-            columnas · 329 ms
+            columnas · 13 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -2043,29 +2103,30 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_20.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> e.id_evento,
-<span class="ln">2</span>       t.nombre <span class="t-k">AS</span> tipo_evento,
-<span class="ln">3</span>       e.fecha,
-<span class="ln">4</span>       e.hora_inicio,
-<span class="ln">5</span>       e.hora_final,
-<span class="ln">6</span>       e.ubicacion,
-<span class="ln">7</span>       c.id_cliente,
-<span class="ln">8</span>       c.nombre <span class="t-k">AS</span> cliente,
-<span class="ln">9</span>       c.telefono
-<span class="ln">10</span><span class="t-k">FROM</span> ventas.evento e
-<span class="ln">11</span><span class="t-k">JOIN</span> ventas.tipo_evento t <span class="t-k">ON</span> t.id_tipo_evento = e.id_tipo_evento
-<span class="ln">12</span><span class="t-k">JOIN</span> ventas.cliente c <span class="t-k">ON</span> c.id_cliente = e.id_cliente
-<span class="ln">13</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> e.fecha, e.hora_inicio;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c20(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Agenda de eventos con el tipo, la fecha y el cliente asociado.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    e = t[<span class="t-s">&quot;evento&quot;</span>][[<span class="t-s">&quot;id_evento&quot;</span>, <span class="t-s">&quot;id_tipo_evento&quot;</span>, <span class="t-s">&quot;id_cliente&quot;</span>,
+<span class="ln">4</span>                     <span class="t-s">&quot;fecha&quot;</span>, <span class="t-s">&quot;hora_inicio&quot;</span>, <span class="t-s">&quot;hora_final&quot;</span>, <span class="t-s">&quot;ubicacion&quot;</span>]]
+<span class="ln">5</span>    r = (e.merge(t[<span class="t-s">&quot;tipo_evento&quot;</span>][[<span class="t-s">&quot;id_tipo_evento&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>]]
+<span class="ln">6</span>                 .rename(columns={<span class="t-s">&quot;nombre&quot;</span>: <span class="t-s">&quot;tipo_evento&quot;</span>}), on=<span class="t-s">&quot;id_tipo_evento&quot;</span>)
+<span class="ln">7</span>         .merge(t[<span class="t-s">&quot;cliente&quot;</span>][[<span class="t-s">&quot;id_cliente&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>, <span class="t-s">&quot;telefono&quot;</span>]]
+<span class="ln">8</span>                .rename(columns={<span class="t-s">&quot;nombre&quot;</span>: <span class="t-s">&quot;cliente&quot;</span>}), on=<span class="t-s">&quot;id_cliente&quot;</span>))
+<span class="ln">9</span>    r = r[[<span class="t-s">&quot;id_evento&quot;</span>, <span class="t-s">&quot;tipo_evento&quot;</span>, <span class="t-s">&quot;fecha&quot;</span>, <span class="t-s">&quot;hora_inicio&quot;</span>, <span class="t-s">&quot;hora_final&quot;</span>,
+<span class="ln">10</span>           <span class="t-s">&quot;ubicacion&quot;</span>, <span class="t-s">&quot;id_cliente&quot;</span>, <span class="t-s">&quot;cliente&quot;</span>, <span class="t-s">&quot;telefono&quot;</span>]]
+<span class="ln">11</span>    <span class="t-k">return</span> r.sort_values([<span class="t-s">&quot;fecha&quot;</span>, <span class="t-s">&quot;hora_inicio&quot;</span>]).reset_index(drop=<span class="t-k">True</span>)
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_20</code> · 3 filas × 9
-            columnas · 108 ms
+            columnas · 10 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -2087,8 +2148,8 @@
                   <td>1</td>
                   <td>Cumpleaños</td>
                   <td>2026-04-18</td>
-                  <td>1900-01-01</td>
-                  <td>1900-01-01</td>
+                  <td>12:55:00</td>
+                  <td>16:55:00</td>
                   <td>
                     Salón principal del restaurante, Barrio Centro, Facatativá
                   </td>
@@ -2100,8 +2161,8 @@
                   <td>2</td>
                   <td>Evento corporativo</td>
                   <td>2026-04-25</td>
-                  <td>1900-01-01</td>
-                  <td>1900-01-01</td>
+                  <td>16:45:00</td>
+                  <td>20:45:00</td>
                   <td>Sede del cliente, Barrio Zambrano, Facatativá</td>
                   <td>6</td>
                   <td>Diego Ortiz</td>
@@ -2111,8 +2172,8 @@
                   <td>3</td>
                   <td>Bautizo</td>
                   <td>2026-05-30</td>
-                  <td>1900-01-01</td>
-                  <td>1900-01-01</td>
+                  <td>11:00:00</td>
+                  <td>15:00:00</td>
                   <td>
                     Salón principal del restaurante, Barrio Centro, Facatativá
                   </td>
@@ -2131,24 +2192,32 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_21.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> t.id_tipo_evento,
-<span class="ln">2</span>       t.nombre <span class="t-k">AS</span> tipo_evento,
-<span class="ln">3</span>       <span class="t-k">COUNT</span>(e.id_evento) <span class="t-k">AS</span> eventos_ejecutados,
-<span class="ln">4</span>       <span class="t-k">COALESCE</span>(<span class="t-k">SUM</span>(e.valor_contratado), <span class="t-n">0</span>) <span class="t-k">AS</span> ingresos_eventos
-<span class="ln">5</span><span class="t-k">FROM</span> ventas.tipo_evento t
-<span class="ln">6</span><span class="t-k">LEFT</span> <span class="t-k">JOIN</span> ventas.evento e <span class="t-k">ON</span> e.id_tipo_evento = t.id_tipo_evento
-<span class="ln">7</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> t.id_tipo_evento, t.nombre
-<span class="ln">8</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> eventos_ejecutados <span class="t-k">DESC</span>, ingresos_eventos <span class="t-k">DESC</span>, t.nombre;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c21(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Eventos ejecutados e ingresos por tipo de evento.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    g = (t[<span class="t-s">&quot;evento&quot;</span>].groupby(<span class="t-s">&quot;id_tipo_evento&quot;</span>)
+<span class="ln">4</span>         .agg(eventos_ejecutados=(<span class="t-s">&quot;id_evento&quot;</span>, <span class="t-s">&quot;size&quot;</span>),
+<span class="ln">5</span>              ingresos_eventos=(<span class="t-s">&quot;valor_contratado&quot;</span>, <span class="t-s">&quot;sum&quot;</span>)))
+<span class="ln">6</span>    r = t[<span class="t-s">&quot;tipo_evento&quot;</span>].merge(g, on=<span class="t-s">&quot;id_tipo_evento&quot;</span>, how=<span class="t-s">&quot;left&quot;</span>)
+<span class="ln">7</span>    r[[<span class="t-s">&quot;eventos_ejecutados&quot;</span>, <span class="t-s">&quot;ingresos_eventos&quot;</span>]] = r[[<span class="t-s">&quot;eventos_ejecutados&quot;</span>, <span class="t-s">&quot;ingresos_eventos&quot;</span>]].fillna(<span class="t-n">0</span>)
+<span class="ln">8</span>    r[<span class="t-s">&quot;eventos_ejecutados&quot;</span>] = r.eventos_ejecutados.astype(<span class="t-k">int</span>)
+<span class="ln">9</span>    <span class="t-k">return</span> (r.rename(columns={<span class="t-s">&quot;nombre&quot;</span>: <span class="t-s">&quot;tipo_evento&quot;</span>})
+<span class="ln">10</span>            [[<span class="t-s">&quot;id_tipo_evento&quot;</span>, <span class="t-s">&quot;tipo_evento&quot;</span>, <span class="t-s">&quot;eventos_ejecutados&quot;</span>, <span class="t-s">&quot;ingresos_eventos&quot;</span>]]
+<span class="ln">11</span>            .sort_values([<span class="t-s">&quot;eventos_ejecutados&quot;</span>, <span class="t-s">&quot;ingresos_eventos&quot;</span>, <span class="t-s">&quot;tipo_evento&quot;</span>],
+<span class="ln">12</span>                         ascending=[<span class="t-k">False</span>, <span class="t-k">False</span>, <span class="t-k">True</span>])
+<span class="ln">13</span>            .reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_21</code> · 8 filas × 4
-            columnas · 118 ms
+            columnas · 13 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -2221,22 +2290,26 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_22.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> <span class="t-k">DATE_TRUNC</span>(<span class="t-s">&#x27;month&#x27;</span>, fecha)::date <span class="t-k">AS</span> mes,
-<span class="ln">2</span>       tipo_costo,
-<span class="ln">3</span>       <span class="t-k">SUM</span>(monto) <span class="t-k">AS</span> costo_total
-<span class="ln">4</span><span class="t-k">FROM</span> ventas.costo
-<span class="ln">5</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> <span class="t-k">DATE_TRUNC</span>(<span class="t-s">&#x27;month&#x27;</span>, fecha), tipo_costo
-<span class="ln">6</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> mes, tipo_costo;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c22(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Costos por mes y tipo de costo.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    k = t[<span class="t-s">&quot;costo&quot;</span>].assign(mes=<span class="t-k">lambda</span> d: pd.to_datetime(d.fecha).dt.to_period(<span class="t-s">&quot;M&quot;</span>).dt.to_timestamp())
+<span class="ln">4</span>    <span class="t-k">return</span> (k.groupby([<span class="t-s">&quot;mes&quot;</span>, <span class="t-s">&quot;tipo_costo&quot;</span>])
+<span class="ln">5</span>            .agg(costo_total=(<span class="t-s">&quot;monto&quot;</span>, <span class="t-s">&quot;sum&quot;</span>))
+<span class="ln">6</span>            .reset_index()
+<span class="ln">7</span>            .sort_values([<span class="t-s">&quot;mes&quot;</span>, <span class="t-s">&quot;tipo_costo&quot;</span>]).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_22</code> · 18 filas × 3
-            columnas · 186 ms
+            columnas · 11 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -2321,38 +2394,32 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_23.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span>WITH ing <span class="t-k">AS</span> (
-<span class="ln">2</span>    <span class="t-k">SELECT</span> id_producto, <span class="t-k">SUM</span>(cantidad) <span class="t-k">AS</span> unidades, <span class="t-k">SUM</span>(subtotal) <span class="t-k">AS</span> ingresos
-<span class="ln">3</span>    <span class="t-k">FROM</span> ventas.detalle_venta
-<span class="ln">4</span>    <span class="t-k">GROUP</span> <span class="t-k">BY</span> id_producto
-<span class="ln">5</span>), cst <span class="t-k">AS</span> (
-<span class="ln">6</span>    <span class="t-k">SELECT</span> id_producto, <span class="t-k">SUM</span>(monto) <span class="t-k">AS</span> costo_produccion
-<span class="ln">7</span>    <span class="t-k">FROM</span> ventas.costo
-<span class="ln">8</span>    <span class="t-k">WHERE</span> tipo_costo = <span class="t-s">&#x27;Producción&#x27;</span>
-<span class="ln">9</span>    <span class="t-k">GROUP</span> <span class="t-k">BY</span> id_producto
-<span class="ln">10</span>)
-<span class="ln">11</span><span class="t-k">SELECT</span> p.id_producto,
-<span class="ln">12</span>       p.nombre,
-<span class="ln">13</span>       p.categoria,
-<span class="ln">14</span>       i.unidades,
-<span class="ln">15</span>       i.ingresos,
-<span class="ln">16</span>       <span class="t-k">COALESCE</span>(c.costo_produccion, <span class="t-n">0</span>) <span class="t-k">AS</span> costo_produccion,
-<span class="ln">17</span>       i.ingresos - <span class="t-k">COALESCE</span>(c.costo_produccion, <span class="t-n">0</span>) <span class="t-k">AS</span> margen_bruto,
-<span class="ln">18</span>       <span class="t-k">ROUND</span>(<span class="t-n">100.0</span> * (i.ingresos - <span class="t-k">COALESCE</span>(c.costo_produccion, <span class="t-n">0</span>)) / NULLIF(i.ingresos, <span class="t-n">0</span>), <span class="t-n">2</span>) <span class="t-k">AS</span> margen_pct
-<span class="ln">19</span><span class="t-k">FROM</span> ventas.producto p
-<span class="ln">20</span><span class="t-k">JOIN</span> ing i <span class="t-k">ON</span> i.id_producto = p.id_producto
-<span class="ln">21</span><span class="t-k">LEFT</span> <span class="t-k">JOIN</span> cst c <span class="t-k">ON</span> c.id_producto = p.id_producto
-<span class="ln">22</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> margen_bruto <span class="t-k">DESC</span>;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c23(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Rentabilidad por producto: ingresos frente al costo de producción.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    ing = (t[<span class="t-s">&quot;detalle_venta&quot;</span>].groupby(<span class="t-s">&quot;id_producto&quot;</span>)
+<span class="ln">4</span>           .agg(unidades=(<span class="t-s">&quot;cantidad&quot;</span>, <span class="t-s">&quot;sum&quot;</span>), ingresos=(<span class="t-s">&quot;subtotal&quot;</span>, <span class="t-s">&quot;sum&quot;</span>)))
+<span class="ln">5</span>    cst = (t[<span class="t-s">&quot;costo&quot;</span>].loc[<span class="t-k">lambda</span> d: d.tipo_costo == <span class="t-s">&quot;Producción&quot;</span>]
+<span class="ln">6</span>           .groupby(<span class="t-s">&quot;id_producto&quot;</span>).agg(costo_produccion=(<span class="t-s">&quot;monto&quot;</span>, <span class="t-s">&quot;sum&quot;</span>)))
+<span class="ln">7</span>    r = t[<span class="t-s">&quot;producto&quot;</span>].merge(ing, on=<span class="t-s">&quot;id_producto&quot;</span>).merge(cst, on=<span class="t-s">&quot;id_producto&quot;</span>, how=<span class="t-s">&quot;left&quot;</span>)
+<span class="ln">8</span>    r[<span class="t-s">&quot;costo_produccion&quot;</span>] = r.costo_produccion.fillna(<span class="t-n">0</span>)
+<span class="ln">9</span>    r[<span class="t-s">&quot;margen_bruto&quot;</span>] = r.ingresos - r.costo_produccion
+<span class="ln">10</span>    r[<span class="t-s">&quot;margen_pct&quot;</span>] = (<span class="t-n">100</span> * r.margen_bruto / r.ingresos.where(r.ingresos != <span class="t-n">0</span>)).<span class="t-k">round</span>(<span class="t-n">2</span>)
+<span class="ln">11</span>    <span class="t-k">return</span> (r[[<span class="t-s">&quot;id_producto&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>, <span class="t-s">&quot;categoria&quot;</span>, <span class="t-s">&quot;unidades&quot;</span>, <span class="t-s">&quot;ingresos&quot;</span>,
+<span class="ln">12</span>               <span class="t-s">&quot;costo_produccion&quot;</span>, <span class="t-s">&quot;margen_bruto&quot;</span>, <span class="t-s">&quot;margen_pct&quot;</span>]]
+<span class="ln">13</span>            .sort_values(<span class="t-s">&quot;margen_bruto&quot;</span>, ascending=<span class="t-k">False</span>).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_23</code> · 16 filas × 8
-            columnas · 151 ms
+            columnas · 21 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -2502,37 +2569,33 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_24.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span>WITH ing <span class="t-k">AS</span> (
-<span class="ln">2</span>    <span class="t-k">SELECT</span> <span class="t-k">DATE_TRUNC</span>(<span class="t-s">&#x27;month&#x27;</span>, fecha_hora)::date <span class="t-k">AS</span> mes, <span class="t-k">SUM</span>(total_venta) <span class="t-k">AS</span> ingresos
-<span class="ln">3</span>    <span class="t-k">FROM</span> ventas.venta
-<span class="ln">4</span>    <span class="t-k">GROUP</span> <span class="t-k">BY</span> <span class="t-k">DATE_TRUNC</span>(<span class="t-s">&#x27;month&#x27;</span>, fecha_hora)
-<span class="ln">5</span>), cst <span class="t-k">AS</span> (
-<span class="ln">6</span>    <span class="t-k">SELECT</span> <span class="t-k">DATE_TRUNC</span>(<span class="t-s">&#x27;month&#x27;</span>, fecha)::date <span class="t-k">AS</span> mes,
-<span class="ln">7</span>           <span class="t-k">SUM</span>(monto) FILTER (<span class="t-k">WHERE</span> tipo_costo = <span class="t-s">&#x27;Producción&#x27;</span>) <span class="t-k">AS</span> costo_produccion,
-<span class="ln">8</span>           <span class="t-k">SUM</span>(monto) FILTER (<span class="t-k">WHERE</span> tipo_costo = <span class="t-s">&#x27;Operativo&#x27;</span>)  <span class="t-k">AS</span> gastos_operativos
-<span class="ln">9</span>    <span class="t-k">FROM</span> ventas.costo
-<span class="ln">10</span>    <span class="t-k">GROUP</span> <span class="t-k">BY</span> <span class="t-k">DATE_TRUNC</span>(<span class="t-s">&#x27;month&#x27;</span>, fecha)
-<span class="ln">11</span>)
-<span class="ln">12</span><span class="t-k">SELECT</span> i.mes,
-<span class="ln">13</span>       i.ingresos,
-<span class="ln">14</span>       <span class="t-k">COALESCE</span>(c.costo_produccion, <span class="t-n">0</span>) <span class="t-k">AS</span> costo_produccion,
-<span class="ln">15</span>       <span class="t-k">COALESCE</span>(c.gastos_operativos, <span class="t-n">0</span>) <span class="t-k">AS</span> gastos_operativos,
-<span class="ln">16</span>       i.ingresos - <span class="t-k">COALESCE</span>(c.costo_produccion, <span class="t-n">0</span>) - <span class="t-k">COALESCE</span>(c.gastos_operativos, <span class="t-n">0</span>) <span class="t-k">AS</span> utilidad,
-<span class="ln">17</span>       <span class="t-k">ROUND</span>(<span class="t-n">100.0</span> * (i.ingresos - <span class="t-k">COALESCE</span>(c.costo_produccion, <span class="t-n">0</span>) - <span class="t-k">COALESCE</span>(c.gastos_operativos, <span class="t-n">0</span>))
-<span class="ln">18</span>             / NULLIF(i.ingresos, <span class="t-n">0</span>), <span class="t-n">2</span>) <span class="t-k">AS</span> margen_pct
-<span class="ln">19</span><span class="t-k">FROM</span> ing i
-<span class="ln">20</span><span class="t-k">LEFT</span> <span class="t-k">JOIN</span> cst c <span class="t-k">ON</span> c.mes = i.mes
-<span class="ln">21</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> i.mes;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c24(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Estado de resultados mensual: ingresos menos producción y gastos operativos.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    v = t[<span class="t-s">&quot;venta&quot;</span>].assign(mes=<span class="t-k">lambda</span> d: d.fecha_hora.dt.to_period(<span class="t-s">&quot;M&quot;</span>).dt.to_timestamp())
+<span class="ln">4</span>    ing = v.groupby(<span class="t-s">&quot;mes&quot;</span>).agg(ingresos=(<span class="t-s">&quot;total_venta&quot;</span>, <span class="t-s">&quot;sum&quot;</span>))
+<span class="ln">5</span>    k = t[<span class="t-s">&quot;costo&quot;</span>].assign(mes=<span class="t-k">lambda</span> d: pd.to_datetime(d.fecha).dt.to_period(<span class="t-s">&quot;M&quot;</span>).dt.to_timestamp())
+<span class="ln">6</span>    cst = (k.pivot_table(index=<span class="t-s">&quot;mes&quot;</span>, columns=<span class="t-s">&quot;tipo_costo&quot;</span>, values=<span class="t-s">&quot;monto&quot;</span>, aggfunc=<span class="t-s">&quot;sum&quot;</span>)
+<span class="ln">7</span>            .rename(columns={<span class="t-s">&quot;Producción&quot;</span>: <span class="t-s">&quot;costo_produccion&quot;</span>,
+<span class="ln">8</span>                             <span class="t-s">&quot;Operativo&quot;</span>: <span class="t-s">&quot;gastos_operativos&quot;</span>}))
+<span class="ln">9</span>    r = ing.join(cst, how=<span class="t-s">&quot;left&quot;</span>).fillna({<span class="t-s">&quot;costo_produccion&quot;</span>: <span class="t-n">0</span>, <span class="t-s">&quot;gastos_operativos&quot;</span>: <span class="t-n">0</span>})
+<span class="ln">10</span>    r[<span class="t-s">&quot;utilidad&quot;</span>] = r.ingresos - r.costo_produccion - r.gastos_operativos
+<span class="ln">11</span>    r[<span class="t-s">&quot;margen_pct&quot;</span>] = (<span class="t-n">100</span> * r.utilidad / r.ingresos.where(r.ingresos != <span class="t-n">0</span>)).<span class="t-k">round</span>(<span class="t-n">2</span>)
+<span class="ln">12</span>    <span class="t-k">return</span> (r.reset_index()[[<span class="t-s">&quot;mes&quot;</span>, <span class="t-s">&quot;ingresos&quot;</span>, <span class="t-s">&quot;costo_produccion&quot;</span>, <span class="t-s">&quot;gastos_operativos&quot;</span>,
+<span class="ln">13</span>                             <span class="t-s">&quot;utilidad&quot;</span>, <span class="t-s">&quot;margen_pct&quot;</span>]]
+<span class="ln">14</span>            .sort_values(<span class="t-s">&quot;mes&quot;</span>).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_24</code> · 8 filas × 6
-            columnas · 110 ms
+            columnas · 27 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -2620,30 +2683,35 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_25.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span><span class="t-k">SELECT</span> e.id_evento,
-<span class="ln">2</span>       t.nombre <span class="t-k">AS</span> tipo_evento,
-<span class="ln">3</span>       e.fecha,
-<span class="ln">4</span>       c.nombre <span class="t-k">AS</span> cliente,
-<span class="ln">5</span>       e.valor_contratado,
-<span class="ln">6</span>       <span class="t-k">COALESCE</span>(<span class="t-k">SUM</span>(k.monto), <span class="t-n">0</span>) <span class="t-k">AS</span> costo_evento,
-<span class="ln">7</span>       e.valor_contratado - <span class="t-k">COALESCE</span>(<span class="t-k">SUM</span>(k.monto), <span class="t-n">0</span>) <span class="t-k">AS</span> utilidad,
-<span class="ln">8</span>       <span class="t-k">ROUND</span>(<span class="t-n">100.0</span> * (e.valor_contratado - <span class="t-k">COALESCE</span>(<span class="t-k">SUM</span>(k.monto), <span class="t-n">0</span>)) / NULLIF(e.valor_contratado, <span class="t-n">0</span>), <span class="t-n">2</span>) <span class="t-k">AS</span> margen_pct
-<span class="ln">9</span><span class="t-k">FROM</span> ventas.evento e
-<span class="ln">10</span><span class="t-k">JOIN</span> ventas.tipo_evento t <span class="t-k">ON</span> t.id_tipo_evento = e.id_tipo_evento
-<span class="ln">11</span><span class="t-k">JOIN</span> ventas.cliente c <span class="t-k">ON</span> c.id_cliente = e.id_cliente
-<span class="ln">12</span><span class="t-k">LEFT</span> <span class="t-k">JOIN</span> ventas.costo k <span class="t-k">ON</span> k.id_evento = e.id_evento <span class="t-k">AND</span> k.tipo_costo = <span class="t-s">&#x27;Evento&#x27;</span>
-<span class="ln">13</span><span class="t-k">GROUP</span> <span class="t-k">BY</span> e.id_evento, t.nombre, e.fecha, c.nombre, e.valor_contratado
-<span class="ln">14</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> e.fecha;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c25(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Rentabilidad por evento: valor contratado menos el costo del evento.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    cst = (t[<span class="t-s">&quot;costo&quot;</span>].loc[<span class="t-k">lambda</span> d: d.tipo_costo == <span class="t-s">&quot;Evento&quot;</span>]
+<span class="ln">4</span>           .groupby(<span class="t-s">&quot;id_evento&quot;</span>).agg(costo_evento=(<span class="t-s">&quot;monto&quot;</span>, <span class="t-s">&quot;sum&quot;</span>)))
+<span class="ln">5</span>    r = (t[<span class="t-s">&quot;evento&quot;</span>][[<span class="t-s">&quot;id_evento&quot;</span>, <span class="t-s">&quot;id_tipo_evento&quot;</span>, <span class="t-s">&quot;id_cliente&quot;</span>, <span class="t-s">&quot;fecha&quot;</span>, <span class="t-s">&quot;valor_contratado&quot;</span>]]
+<span class="ln">6</span>         .merge(t[<span class="t-s">&quot;tipo_evento&quot;</span>][[<span class="t-s">&quot;id_tipo_evento&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>]]
+<span class="ln">7</span>                .rename(columns={<span class="t-s">&quot;nombre&quot;</span>: <span class="t-s">&quot;tipo_evento&quot;</span>}), on=<span class="t-s">&quot;id_tipo_evento&quot;</span>)
+<span class="ln">8</span>         .merge(t[<span class="t-s">&quot;cliente&quot;</span>][[<span class="t-s">&quot;id_cliente&quot;</span>, <span class="t-s">&quot;nombre&quot;</span>]]
+<span class="ln">9</span>                .rename(columns={<span class="t-s">&quot;nombre&quot;</span>: <span class="t-s">&quot;cliente&quot;</span>}), on=<span class="t-s">&quot;id_cliente&quot;</span>)
+<span class="ln">10</span>         .merge(cst, on=<span class="t-s">&quot;id_evento&quot;</span>, how=<span class="t-s">&quot;left&quot;</span>))
+<span class="ln">11</span>    r[<span class="t-s">&quot;costo_evento&quot;</span>] = r.costo_evento.fillna(<span class="t-n">0</span>)
+<span class="ln">12</span>    r[<span class="t-s">&quot;utilidad&quot;</span>] = r.valor_contratado - r.costo_evento
+<span class="ln">13</span>    r[<span class="t-s">&quot;margen_pct&quot;</span>] = (<span class="t-n">100</span> * r.utilidad / r.valor_contratado.where(r.valor_contratado != <span class="t-n">0</span>)).<span class="t-k">round</span>(<span class="t-n">2</span>)
+<span class="ln">14</span>    <span class="t-k">return</span> (r[[<span class="t-s">&quot;id_evento&quot;</span>, <span class="t-s">&quot;tipo_evento&quot;</span>, <span class="t-s">&quot;fecha&quot;</span>, <span class="t-s">&quot;cliente&quot;</span>, <span class="t-s">&quot;valor_contratado&quot;</span>,
+<span class="ln">15</span>               <span class="t-s">&quot;costo_evento&quot;</span>, <span class="t-s">&quot;utilidad&quot;</span>, <span class="t-s">&quot;margen_pct&quot;</span>]]
+<span class="ln">16</span>            .sort_values(<span class="t-s">&quot;fecha&quot;</span>).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_25</code> · 3 filas × 8
-            columnas · 196 ms
+            columnas · 18 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -2699,36 +2767,32 @@
           <div class="carbon">
             <div class="cb-top">
               <span class="cb-dots"><i></i><i></i><i></i></span
-              ><span class="cb-file">03_consultas.sql</span
-              ><span class="cb-lang">SQL</span>
+              ><span class="cb-file">consulta_26.py</span
+              ><span class="cb-lang">PYTHON</span>
             </div>
             <pre
               class="cb-code"
-            ><code><span class="ln">1</span>WITH ing <span class="t-k">AS</span> (
-<span class="ln">2</span>    <span class="t-k">SELECT</span> p.categoria, <span class="t-k">SUM</span>(d.cantidad) <span class="t-k">AS</span> unidades, <span class="t-k">SUM</span>(d.subtotal) <span class="t-k">AS</span> ingresos
-<span class="ln">3</span>    <span class="t-k">FROM</span> ventas.detalle_venta d
-<span class="ln">4</span>    <span class="t-k">JOIN</span> ventas.producto p <span class="t-k">ON</span> p.id_producto = d.id_producto
-<span class="ln">5</span>    <span class="t-k">GROUP</span> <span class="t-k">BY</span> p.categoria
-<span class="ln">6</span>), cst <span class="t-k">AS</span> (
-<span class="ln">7</span>    <span class="t-k">SELECT</span> p.categoria, <span class="t-k">SUM</span>(k.monto) <span class="t-k">AS</span> costo_produccion
-<span class="ln">8</span>    <span class="t-k">FROM</span> ventas.costo k
-<span class="ln">9</span>    <span class="t-k">JOIN</span> ventas.producto p <span class="t-k">ON</span> p.id_producto = k.id_producto
-<span class="ln">10</span>    <span class="t-k">WHERE</span> k.tipo_costo = <span class="t-s">&#x27;Producción&#x27;</span>
-<span class="ln">11</span>    <span class="t-k">GROUP</span> <span class="t-k">BY</span> p.categoria
-<span class="ln">12</span>)
-<span class="ln">13</span><span class="t-k">SELECT</span> i.categoria,
-<span class="ln">14</span>       i.unidades,
-<span class="ln">15</span>       i.ingresos,
-<span class="ln">16</span>       <span class="t-k">COALESCE</span>(c.costo_produccion, <span class="t-n">0</span>) <span class="t-k">AS</span> costo_produccion,
-<span class="ln">17</span>       <span class="t-k">ROUND</span>(<span class="t-n">100.0</span> * (i.ingresos - <span class="t-k">COALESCE</span>(c.costo_produccion, <span class="t-n">0</span>)) / NULLIF(i.ingresos, <span class="t-n">0</span>), <span class="t-n">2</span>) <span class="t-k">AS</span> margen_pct
-<span class="ln">18</span><span class="t-k">FROM</span> ing i
-<span class="ln">19</span><span class="t-k">LEFT</span> <span class="t-k">JOIN</span> cst c <span class="t-k">ON</span> c.categoria = i.categoria
-<span class="ln">20</span><span class="t-k">ORDER</span> <span class="t-k">BY</span> margen_pct <span class="t-k">DESC</span>;
+            ><code><span class="ln">1</span><span class="t-k">def</span> c26(t):
+<span class="ln">2</span>    <span class="t-s">&quot;&quot;&quot;Rentabilidad por categoría de producto.&quot;&quot;&quot;</span>
+<span class="ln">3</span>    ing = (t[<span class="t-s">&quot;detalle_venta&quot;</span>].merge(t[<span class="t-s">&quot;producto&quot;</span>][[<span class="t-s">&quot;id_producto&quot;</span>, <span class="t-s">&quot;categoria&quot;</span>]], on=<span class="t-s">&quot;id_producto&quot;</span>)
+<span class="ln">4</span>           .groupby(<span class="t-s">&quot;categoria&quot;</span>).agg(unidades=(<span class="t-s">&quot;cantidad&quot;</span>, <span class="t-s">&quot;sum&quot;</span>), ingresos=(<span class="t-s">&quot;subtotal&quot;</span>, <span class="t-s">&quot;sum&quot;</span>)))
+<span class="ln">5</span>    cst = (t[<span class="t-s">&quot;costo&quot;</span>].loc[<span class="t-k">lambda</span> d: d.tipo_costo == <span class="t-s">&quot;Producción&quot;</span>]
+<span class="ln">6</span>           .merge(t[<span class="t-s">&quot;producto&quot;</span>][[<span class="t-s">&quot;id_producto&quot;</span>, <span class="t-s">&quot;categoria&quot;</span>]], on=<span class="t-s">&quot;id_producto&quot;</span>)
+<span class="ln">7</span>           .groupby(<span class="t-s">&quot;categoria&quot;</span>).agg(costo_produccion=(<span class="t-s">&quot;monto&quot;</span>, <span class="t-s">&quot;sum&quot;</span>)))
+<span class="ln">8</span>    r = ing.join(cst, how=<span class="t-s">&quot;left&quot;</span>)
+<span class="ln">9</span>    r[<span class="t-s">&quot;costo_produccion&quot;</span>] = r.costo_produccion.fillna(<span class="t-n">0</span>)
+<span class="ln">10</span>    r[<span class="t-s">&quot;margen_pct&quot;</span>] = (<span class="t-n">100</span> * (r.ingresos - r.costo_produccion)
+<span class="ln">11</span>                       / r.ingresos.where(r.ingresos != <span class="t-n">0</span>)).<span class="t-k">round</span>(<span class="t-n">2</span>)
+<span class="ln">12</span>    <span class="t-k">return</span> (r.reset_index()[[<span class="t-s">&quot;categoria&quot;</span>, <span class="t-s">&quot;unidades&quot;</span>, <span class="t-s">&quot;ingresos&quot;</span>, <span class="t-s">&quot;costo_produccion&quot;</span>, <span class="t-s">&quot;margen_pct&quot;</span>]]
+<span class="ln">13</span>            .sort_values(<span class="t-s">&quot;margen_pct&quot;</span>, ascending=<span class="t-k">False</span>).reset_index(drop=<span class="t-k">True</span>))
 </code></pre>
           </div>
           <p class="df">
             Resultado · DataFrame <code>consulta_26</code> · 5 filas × 5
-            columnas · 106 ms
+            columnas · 91 ms ·
+            <span class="ok"
+              >✓ idéntico a la consulta SQL de la sustentación</span
+            >
           </p>
           <div class="tw">
             <table>
@@ -4119,13 +4183,5 @@
       Datos extraídos de PostgreSQL con Python (pandas + SQLAlchemy). Proyecto
       de aula · Octubre de 2026.
     </footer>
-    <script type="module">
-      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
-      mermaid.initialize({
-        startOnLoad: true,
-        theme: "neutral",
-        securityLevel: "loose",
-      });
-    </script>
   </body>
 </html>

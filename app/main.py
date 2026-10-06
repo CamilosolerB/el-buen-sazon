@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 load_dotenv()
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from sqlalchemy import text
 from app.informe import construir, renderizar
 from app.db import conectar, extraer
@@ -48,6 +48,13 @@ def blog():
         return HTMLResponse("<h2>Blog aún no generado</h2><p>Ejecute <code>python scripts/generar_blog.py</code> y vuelva a cargar esta página.</p>", 404)
     if not hasattr(blog, "_html"): blog._html = BLOG.read_text(encoding="utf-8")
     return blog._html
+
+@app.get("/mer.png")
+def diagrama():
+    """Diagrama entidad-relación que ilustra la sección 3 del blog."""
+    ruta = BLOG.parent / "mer.png"
+    if not ruta.exists(): return JSONResponse({"error": "mer.png no generado"}, 404)
+    return FileResponse(ruta, media_type="image/png", headers={"Cache-Control": "public, max-age=3600"})
 
 @app.get("/api/resumen")
 def resumen():

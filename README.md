@@ -3,14 +3,17 @@
 Aplicación web en Python (FastAPI + pandas + SQLAlchemy) que **consulta la base de datos en Supabase (PostgreSQL)** en cada visita y muestra el informe descriptivo con datos en vivo: ventas, productos, clientes, empleados, rentabilidad (costos) y eventos.
 
 ```
-app/main.py            API y páginas web (FastAPI): informe en vivo y /blog
+app/main.py            API y páginas web (FastAPI): informe en vivo, /blog y /mer.png
 app/db.py              conexión a PostgreSQL (DATABASE_URL) y las 12 consultas SQL
 app/informe.py         indicadores con pandas y render de la plantilla
 app/analisis.py        módulo de compatibilidad (re-exporta db + informe)
 app/templates/         informe.html (plantilla del informe, placeholders __DATA__ y __BARRA__)
 app/static/blog.html   blog del proyecto de aula (se genera, se sirve en /blog)
+app/static/mer.png     copia del diagrama E-R que sirve la aplicación al blog
 database/              01_schema.sql · 02_datos.sql · 03_consultas.sql (26 consultas)
 scripts/               cargar_bd.py (sube esquema y datos) · generar_blog.py (blog del curso)
+scripts/consultas_pandas.py  las 26 consultas de la sustentación, reescritas en pandas y validadas
+mer.png                diagrama entidad-relación en imagen (lo usa el blog en la sección 3)
 docs/                  modelo relacional / E-R (Mermaid) y diccionario de datos (Excel)
 ```
 
@@ -32,17 +35,23 @@ Los datos se vuelven a leer de la base cada `CACHE_SEGUNDOS` (60 por defecto) o 
 ```bash
 python scripts/generar_blog.py
 ```
-Genera el blog (las 5 secciones de la normativa, los 10 KPIs y las **26 consultas validadas**
-con su código en estilo Carbon y su resultado) en dos archivos:
-- `blog_el_buen_sazon.html` → súbelo tal cual a **GitHub Pages, Netlify, Vercel o Blogger**
-  (es HTML estático autocontenido; solo el diagrama E-R necesita internet para Mermaid).
-- `app/static/blog.html` → se publica solo en la ruta **`/blog`** de esta aplicación.
+Genera el blog (las 5 secciones de la normativa, los 10 KPIs y las **26 consultas analíticas
+en Python + pandas**, con su código en estilo Carbon y su resultado) en tres archivos:
+- `index.html` → el que se publica en **GitHub Pages** (ya está versionado).
+- `blog_el_buen_sazon.html` → copia para subirla a Netlify, Vercel o Blogger.
+- `app/static/blog.html` → se publica en la ruta **`/blog`** de esta aplicación.
+
+Cada consulta se ejecuta en pandas (`scripts/consultas_pandas.py`) y se compara fila a fila con
+la consulta SQL original de `database/03_consultas.sql`: el blog muestra el sello
+*idéntico a la consulta SQL de la sustentación*. Solo la extracción usa SQL (`SELECT *` de las
+9 tablas); todo el análisis del blog está en pandas. El diagrama E-R es la imagen `mer.png`,
+así que la página no depende de ningún CDN.
 
 ## 4. Desplegar
 - **Render:** New → Blueprint → seleccione este repo (usa `render.yaml`) y defina `DATABASE_URL`.
   La app publica `/` (datos en vivo) y `/blog`.
 - **Railway / Fly.io / Cloud Run:** usan el `Dockerfile`; defina la variable `DATABASE_URL`.
-- **Sitio estático (sin backend):** suba `blog_el_buen_sazon.html` a Pages/Netlify/Blogger.
+- **Sitio estático (sin backend):** `index.html` ya es el sitio de Pages; para otro host suba `blog_el_buen_sazon.html` (junto con `mer.png`).
 
 ## Nota sobre los datos
 Clientes, empleados, domicilios y ventas son los del proyecto. Los costos, los tipos de evento, los eventos y los productos nuevos (gaseosas, cervezas, acompañantes) con sus líneas de venta fueron **simulados**.

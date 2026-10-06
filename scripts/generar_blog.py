@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Blog del proyecto de aula - Análisis descriptivo (El Buen Sazón).
-Usa la conexión y consultas de analisis_descriptivo.py, agrega consultas propias,
-construye DataFrames con pandas y escribe blog_el_buen_sazon.html.
-Uso: PGPASSWORD=clave python generar_blog.py"""
+Las 26 consultas de la sustentación se ejecutan en Python + pandas
+(scripts/consultas_pandas.py) y se validan contra su SQL original; el blog
+muestra el código pandas en bloques Carbon y sus resultados.
+Escribe index.html, blog_el_buen_sazon.html y app/static/blog.html.
+Uso: python scripts/generar_blog.py"""
 import sys, pathlib; sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-import html, calendar, datetime as dt, re, time, inspect
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import html, calendar, datetime as dt, re, inspect
 import pandas as pd
 from sqlalchemy import text
 from app.db import conectar, extraer, QUERIES
 from app.informe import cop, ent, DIAS, MESES
+import consultas_pandas
 
 BASE = pathlib.Path(__file__).resolve().parent.parent
 ARCHIVO_SQL = BASE / "database" / "03_consultas.sql"
@@ -29,18 +33,19 @@ EXTRA = {
         GROUP BY v.id_venta, v.total_venta HAVING v.total_venta <> SUM(d.subtotal)) x) AS ventas_descuadradas,
   (SELECT COUNT(*) FROM ventas.producto p WHERE NOT EXISTS (SELECT 1 FROM ventas.detalle_venta d WHERE d.id_producto=p.id_producto)) AS prod_sin_ventas""",
 }
-SNIPPET = '''from sqlalchemy import create_engine, text
-import pandas as pd
+SNIPPET = '''import pandas as pd
+from sqlalchemy import create_engine, text
 
 engine = create_engine("postgresql+psycopg2://usuario:clave@localhost:5432/el_buen_sabor")
 with engine.connect() as cn:
-    df_ventas = pd.read_sql(text("""
-        SELECT TO_CHAR(fecha_hora,'YYYY-MM') AS mes, tipo_venta AS canal,
-               COUNT(*) AS ventas, SUM(total_venta) AS ingresos
-        FROM ventas.venta GROUP BY 1,2"""), cn)
+    venta = pd.read_sql(text("SELECT * FROM ventas.venta"), cn)     # extracción
+    detalle = pd.read_sql(text("SELECT * FROM ventas.detalle_venta"), cn)
 
-df_ventas.groupby("mes")[["ventas", "ingresos"]].sum()      # agrupar
-df_ventas["ingresos"].describe()                            # estadísticos descriptivos'''
+lineas = detalle.groupby("id_venta").size()                         # agrupar
+venta = venta.merge(lineas.rename("lineas"), on="id_venta")         # cruzar
+venta["mes"] = venta.fecha_hora.dt.to_period("M")                   # derivar
+venta.groupby("mes").agg(ventas=("total_venta", "size"),            # indicadores
+                         ingresos=("total_venta", "sum")).describe()'''
 
 m0 = lambda n: "$" + f"{n:,.0f}".replace(",", ".")
 pc = lambda x: f"{x:.1f} %".replace(".", ",")
@@ -103,6 +108,7 @@ def fm_resultado(df):
         v = s.iloc[0]
         if pd.api.types.is_integer_dtype(df[c]): fm[c] = ent
         elif pd.api.types.is_float_dtype(df[c]): fm[c] = dec
+        elif isinstance(v, dt.time): fm[c] = lambda x: html.escape(str(x))
         elif hasattr(v, "strftime"): fm[c] = lambda x: x.strftime("%Y-%m-%d")
         else: fm[c] = lambda x: html.escape(str(x))
     return fm
@@ -134,17 +140,23 @@ GRUPOS = [
 ]
 
 def ejecutar_consultas(cn, consultas):
-    """Ejecuta cada consulta y devuelve el HTML: bloque carbon + resultado."""
+    """Ejecuta las 26 consultas en pandas (cada una validada contra su SQL) y arma el HTML."""
     htmls = {}
-    for num, titulo, sql in consultas:
-        t0 = time.perf_counter()
-        df = pd.read_sql(text(sql), cn)
-        ms = int((time.perf_counter() - t0) * 1000)
+    fallos = 0
+    for r in consultas_pandas.ejecutar(cn, consultas):
+        num, titulo, df = r["num"], r["titulo"], r["df"]
+        sello = (f'<span class="ok">✓ idéntico a la consulta SQL de la sustentación</span>' if r["ok"]
+                 else f'<span class="err">✗ {html.escape(r["nota"])}</span>')
         meta = (f'<p class="df">Resultado · DataFrame <code>consulta_{num:02d}</code> · '
-                f'{len(df)} fila{"s" if len(df) != 1 else ""} × {df.shape[1]} columnas · {ms} ms</p>')
+                f'{len(df)} fila{"s" if len(df) != 1 else ""} × {df.shape[1]} columnas · '
+                f'{r["ms"]} ms · {sello}</p>')
         htmls[num] = (f'<article class="q"><h4 id="q{num}">Consulta {num} · {html.escape(titulo)}</h4>'
-                      f'{carbon(sql, "03_consultas.sql", "sql")}{meta}{tabla_resultado(df)}</article>')
-        print(f"  consulta {num:2d}/26 {titulo[:40]:42s} -> {len(df):5d} filas · {ms} ms")
+                      f'{carbon(inspect.getsource(r["codigo"]), f"consulta_{num:02d}.py", "python")}'
+                      f'{meta}{tabla_resultado(df)}</article>')
+        if not r["ok"]:
+            fallos += 1
+    if fallos:
+        print(f"  ¡ATENCIÓN! {fallos} consultas NO coinciden con su resultado SQL")
     return htmls
 
 def secciones_consultas(htmls):
@@ -278,9 +290,8 @@ def main():
            "domicilio": ("Original", "Entregas de ventas a domicilio"), "tipo_evento": ("Simulado", "Catálogo de tipos de evento"), "evento": ("Mixto", "Eventos ejecutados (máx. 3)"),
            "venta": ("Original", "Cabecera de la venta"), "detalle_venta": ("Mixto", "Líneas de la venta"), "costo": ("Simulado", "Costos de producción, operativos y de evento")}
     df_tab = pd.DataFrame([(t, tt[t], *ORI[t]) for t in ORI], columns=["tabla", "registros", "origen", "descripción"])
-    mer = (BASE / "docs" / "modelo_relacional.mermaid").read_text(encoding="utf-8").split("---", 2)[-1].strip()
     cfg = d["kpi"].iloc[0]
-    body = f'''<header><p>Business Intelligence 801SIS · Ingeniería de Sistemas · Universidad de Cundinamarca · Ing. Ivon Forero</p>
+    body = f'''<header><p>Business Analytics 801SIS · Ingeniería de Sistemas · Universidad de Cundinamarca · Ing. Ivon Forero</p>
 <h1>Análisis descriptivo del proyecto de aula: Restaurante El Buen Sazón</h1>
 <p>Camilo Soler · Sebastián Valencia · Juan Acevedo · Wilson Cristancho · Santiago Mahecha</p></header>
 <nav><a href="#s1">1. Modelo de negocio</a><a href="#s2">2. Proceso foco</a><a href="#s3">3. Conjunto de datos</a><a href="#qsql">26 consultas</a><a href="#s4">4. Indicadores (KPIs)</a><a href="#s5">5. Diagnóstico</a></nav>
@@ -290,22 +301,22 @@ def main():
 <p><b>Procesos considerados en el análisis.</b></p><ul><li><b>Venta:</b> un empleado registra la venta de un cliente (local o domicilio) y sus productos.</li><li><b>Domicilio:</b> pedidos con dirección y teléfono de entrega.</li><li><b>Catálogo y costos:</b> productos con precio, costos de producción y gastos operativos mensuales.</li><li><b>Eventos:</b> reservas de celebraciones (cumpleaños, bautizos, corporativos) por cliente.</li></ul></section>
 <section id="s2"><h2>2. Identificación del proceso foco de estudio</h2>
 <p><b>Nombre del proceso.</b> Gestión de ventas y rentabilidad (registro de ventas en local y a domicilio).</p>
-<p><b>Objetivo.</b> Registrar cada venta con su detalle de forma correcta y completa, para conocer qué se vende, cuándo, a quién y con qué margen, y así maximizar ingresos y utilidad.</p>
-<p><b>Justificación.</b> Es el proceso que genera los ingresos y concentra los costos. El análisis muestra un margen neto de apenas {pc(100*UT/ING)}, ventas concentradas en pocas horas y clientes, y baja venta cruzada: mejorar este proceso tiene el mayor efecto sobre el negocio.</p></section>
+<p><b>Objetivo.</b> Registrar cada venta con su detalle de forma correcta y completa, para conocer qué se vende, cuándo, a quién y con qué margen, y así dar un respectivo análisis completo y adaptado al negocio.</p>
+<p><b>Justificación.</b> La realización de este análisis es fundamental para comprender en profundidad el comportamiento de las ventas y la dinámica de la demanda, permitiendo identificar con precisión las horas pico y los días de la semana con mayor o menor dinamismo comercial. Conocer estos patrones de consumo resulta indispensable para optimizar la operación y la atención al cliente. Asimismo, el estudio de los ingresos brutos y netos mensuales, respaldado por un control estricto de los costos de producción, proporcionará la base analítica necesaria para evaluar la rentabilidad real del negocio y respaldar una toma de decisiones estratégica y eficiente.</p></section>
 <section id="s3"><h2>3. Conjunto de datos</h2>
 <h3>Diagrama entidad-relación (modelo relacional ajustado)</h3>
 <p>Ajustes de la revisión en clase: se extrajo la entidad <code>tipo_evento</code> de <code>evento</code>, se agregó la tabla <code>costo</code> (producción, operativos y eventos) y se amplió <code>producto</code> con gaseosas, cervezas y acompañantes.</p>
-<pre class="mermaid">{mer}</pre>
+<img src="mer.png" width="100%" alt="Diagrama entidad-relación modelo relacional ajustado">
 <h3>Base de datos (PostgreSQL, esquema <code>ventas</code>)</h3>
 {tabla(df_tab, {"registros": ent})}
-<p class="nt"><b>Nota sobre los datos.</b> Clientes, empleados, domicilios y ventas provienen del conjunto de datos original del proyecto. Los costos, los tipos de evento, el evento 3, los valores de los eventos y los productos nuevos (con sus líneas de venta) fueron simulados para completar el análisis de rentabilidad; por eso las conclusiones sobre costos son ilustrativas. Se validaron 26 consultas SQL (resumen de ventas, por canal, día, mes y hora, clientes, empleados, productos, eventos, costos y rentabilidad).</p>
+<p class="nt"><b>Nota sobre los datos.</b> Clientes, empleados, domicilios y ventas provienen del conjunto de datos original del proyecto. Los costos, los tipos de evento, el evento 3, los valores de los eventos y los productos nuevos (con sus líneas de venta) fueron simulados para completar el análisis de rentabilidad; por eso las conclusiones sobre costos son ilustrativas. Las 26 consultas analíticas (resumen de ventas, por canal, día, mes y hora, clientes, empleados, productos, eventos, costos y rentabilidad) se implementaron en Python y se verificaron contra las consultas SQL de la sustentación.</p>
 <h3>Conexión de la base de datos con Python</h3>
-<p>El gestor es PostgreSQL, por eso se usa <b>SQLAlchemy</b> con el controlador <b>psycopg2</b> y <b>pandas</b>. El proceso técnico es: (1) crear el <i>engine</i> con las credenciales de la variable de entorno <code>DATABASE_URL</code> (cargada con <code>python-dotenv</code>); (2) ejecutar cada consulta SQL con <code>pd.read_sql</code>, que devuelve un DataFrame; (3) transformar con pandas (<code>groupby</code>, <code>merge</code>, <code>describe</code>) para calcular los estadísticos; (4) presentar tablas, gráficos y conclusiones. Se ejecutaron {len(QUERIES)} consultas del informe y {len(EXTRA)} adicionales del blog, además de las 26 consultas validadas de la sustentación (se muestran completas más abajo), para construir 10 DataFrames.</p>
+<p>El gestor es PostgreSQL, por eso se usa <b>SQLAlchemy</b> con el controlador <b>psycopg2</b> y <b>pandas</b>. El proceso técnico es: (1) crear el <i>engine</i> con las credenciales de la variable de entorno <code>DATABASE_URL</code> (cargada con <code>python-dotenv</code>); (2) leer las 9 tablas completas del esquema <code>ventas</code> con <code>pd.read_sql</code>, que devuelve un DataFrame por tabla — es el único paso con SQL, la extracción de datos; (3) hacer todo el análisis con pandas (<code>groupby</code>, <code>merge</code>, <code>agg</code>, <code>describe</code>), sin escribir consultas SQL en el código de análisis; (4) presentar tablas, gráficos y conclusiones. Se ejecutaron {len(QUERIES)} consultas de extracción del informe y {len(EXTRA)} adicionales del blog, además de las 26 consultas analíticas de la sustentación (se muestran completas más abajo), para construir 10 DataFrames.</p>
 {src_con}{src_ext}
-<p class="nt">Ejemplo mínimo de conexión y primera consulta:</p>
+<p class="nt">Ejemplo mínimo de conexión, extracción y primeros cálculos con pandas:</p>
 {src_snip}
-<h3 id="qsql">Consultas SQL validadas en la sustentación (26) y su resultado</h3>
-<p>Las 26 consultas de <code>database/03_consultas.sql</code> se ejecutan una a una contra Supabase; cada bloque muestra el código fuente y, debajo, el DataFrame resultante (primeras 12 filas, con el total de filas y el tiempo de ejecución).</p>
+<h3 id="qsql">Consultas analíticas en Python + pandas (26) y su resultado</h3>
+<p>Las 26 consultas de <code>database/03_consultas.sql</code> se reescribieron en Python: cada bloque muestra el código pandas que se ejecuta y, debajo, el DataFrame resultante (primeras 12 filas, con el total de filas, el tiempo de ejecución y el sello de validación). El código se corre contra Supabase y se compara fila a fila con la consulta SQL original de la sustentación: las 26 coinciden en columnas, filas y valores.</p>
 {qhtml}</section>
 <section id="s4"><h2>4. Análisis de indicadores (KPIs)</h2>
 <p>Periodo: {cfg.desde} a {cfg.hasta} · {ent(k.ventas)} ventas · {cop(ING)} en ingresos · ticket promedio {m0(k.ticket_prom)} · {int(k.clientes)} clientes activos.</p>
@@ -315,18 +326,15 @@ def main():
 <p class="cn"><b>Conclusión general.</b> El restaurante tiene una demanda estable y un buen volumen de ventas, pero su rentabilidad es ajustada ({pc(100*UT/ING)} de margen neto). Las mayores oportunidades están en aumentar el ticket con venta cruzada, aprovechar las horas valle, proteger a los clientes más fiables y registrar costos reales para decidir con datos.</p></section></main>
 <footer>Datos extraídos de PostgreSQL con Python (pandas + SQLAlchemy). Proyecto de aula · Octubre de 2026.</footer>'''
     out_root = BASE / "blog_el_buen_sazon.html"
+    out_index = BASE / "index.html"
     out_app = BASE / "app" / "static" / "blog.html"
     out_app.parent.mkdir(exist_ok=True)
-    doc = HEAD + body + SCRIPT + "</body></html>"
-    for ruta in (out_root, out_app):
-        ruta.write_text(doc, encoding="utf-8")
-        print(f"{ruta.relative_to(BASE)}  {len(doc) // 1024} KB")
-
-SCRIPT = '''<script type="module">
-import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
-mermaid.initialize({startOnLoad:true, theme:"neutral", securityLevel:"loose"});
-</script>
-'''
+    (out_app.parent / "mer.png").write_bytes((BASE / "mer.png").read_bytes())
+    doc = HEAD + body + "</body></html>"
+    doc_app = doc.replace('src="mer.png"', 'src="/mer.png"')
+    for ruta, texto in ((out_root, doc), (out_index, doc), (out_app, doc_app)):
+        ruta.write_text(texto, encoding="utf-8")
+        print(f"{ruta.relative_to(BASE)}  {len(texto) // 1024} KB")
 HEAD = '''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Blog · Análisis descriptivo · Restaurante El Buen Sazón</title><style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#faf7f4;--cd:#fff;--tx:#2b2523;--mu:#6b625d;--ac:#c4581b;--bl:#118dff;--ok:#12a579;--bd:#e6dfd9}
@@ -353,8 +361,9 @@ pre.cb-code code{background:none;padding:0;color:inherit;font-size:inherit}
 .t-c{color:#5c6370;font-style:italic}.t-s{color:#98c379}.t-k{color:#c678dd}.t-n{color:#d19a66}
 .q{background:var(--cd);border:1px solid var(--bd);border-radius:8px;padding:2px 14px 12px;margin:14px 0}
 .q h4{margin:14px 0 8px;font-size:15px}
+.df .ok{color:var(--ok);font-weight:600}.df .err{color:#c0392b;font-weight:600}
 .gq{margin:28px 0 4px;padding:7px 10px;background:var(--bd);border-left:4px solid var(--ac);border-radius:4px;font-size:16px}
-pre{background:#1e1e1e;color:#e6e6e6;padding:12px;border-radius:6px;overflow-x:auto;font-size:12.5px;line-height:1.45}pre.mermaid{background:var(--cd);color:var(--tx);text-align:center}
+pre{background:#1e1e1e;color:#e6e6e6;padding:12px;border-radius:6px;overflow-x:auto;font-size:12.5px;line-height:1.45}
 footer{text-align:center;font:12px sans-serif;color:var(--mu);padding:16px}
 </style></head><body>'''
 if __name__ == "__main__":
