@@ -1,0 +1,13 @@
+---
+title: Modelo entidad-relación - Restaurante El Buen Sazón
+---
+erDiagram
+    CLIENTE ||--o{ VENTA : realiza
+    EMPLEADO ||--o{ VENTA : registra
+    DOMICILIO |o--o| VENTA : "se asocia a"
+    VENTA ||--|{ DETALLE_VENTA : contiene
+    PRODUCTO ||--o{ DETALLE_VENTA : incluye
+    CLIENTE ||--o{ EVENTO : reserva
+    TIPO_EVENTO ||--o{ EVENTO : clasifica
+    PRODUCTO |o--o{ COSTO : "genera costo de producción"
+    EVENTO |o--o{ COSTO : "genera costo de evento"

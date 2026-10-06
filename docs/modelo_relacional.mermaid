@@ -1,0 +1,80 @@
+---
+title: Modelo relacional - Restaurante El Buen Sazón (esquema ventas)
+---
+erDiagram
+    CLIENTE {
+        integer id_cliente PK
+        varchar nombre
+        varchar direccion
+        varchar telefono
+        varchar email UK
+    }
+    EMPLEADO {
+        integer id_empleado PK
+        varchar nombre
+        varchar cargo
+        varchar telefono
+    }
+    PRODUCTO {
+        integer id_producto PK
+        varchar nombre
+        text descripcion
+        varchar categoria
+        numeric precio_venta
+    }
+    DOMICILIO {
+        integer id_domicilio PK
+        timestamp fecha_hora
+        varchar direccion_entrega
+        varchar telefono_contacto
+    }
+    TIPO_EVENTO {
+        integer id_tipo_evento PK
+        varchar nombre UK
+        text descripcion
+    }
+    EVENTO {
+        integer id_evento PK
+        integer id_tipo_evento FK
+        date fecha
+        time hora_inicio
+        time hora_final
+        varchar ubicacion
+        integer id_cliente FK
+        numeric valor_contratado
+    }
+    VENTA {
+        integer id_venta PK
+        timestamp fecha_hora
+        integer id_cliente FK
+        integer id_empleado FK
+        varchar tipo_venta
+        integer id_domicilio FK
+        numeric total_venta
+    }
+    DETALLE_VENTA {
+        integer id_detalle PK
+        integer id_venta FK
+        integer id_producto FK
+        integer cantidad
+        numeric subtotal
+    }
+    COSTO {
+        integer id_costo PK
+        date fecha
+        varchar tipo_costo
+        varchar concepto
+        integer id_producto FK
+        integer id_evento FK
+        numeric monto
+    }
+
+    CLIENTE ||--o{ VENTA : realiza
+    EMPLEADO ||--o{ VENTA : registra
+    DOMICILIO |o--o| VENTA : "se asocia a"
+    VENTA ||--|{ DETALLE_VENTA : contiene
+    PRODUCTO ||--o{ DETALLE_VENTA : incluye
+    CLIENTE ||--o{ EVENTO : reserva
+    TIPO_EVENTO ||--o{ EVENTO : clasifica
+    PRODUCTO |o--o{ COSTO : "genera costo de producción"
+    EVENTO |o--o{ COSTO : "genera costo de evento"
