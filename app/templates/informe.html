@@ -1,0 +1,106 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>El Buen Sazón · Informe de análisis descriptivo</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f3f2f1;--cd:#fff;--tx:#252423;--mu:#605e5c;--ac:#c4581b;--bl:#118dff;--ok:#12a579;--bd:#e1dfdd;--rd:#d64550}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1a19;--cd:#292827;--tx:#f3f2f1;--mu:#a19f9d;--bd:#3b3a39}}
+:root[data-theme="dark"]{--bg:#1b1a19;--cd:#292827;--tx:#f3f2f1;--mu:#a19f9d;--bd:#3b3a39}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 "Segoe UI",system-ui,sans-serif}
+header{background:linear-gradient(120deg,#7a2e0c,#c4581b);color:#fff;padding:22px 16px}
+header h1{margin:0;font-size:24px}header p{margin:4px 0 0;opacity:.9}
+main{max-width:1100px;margin:0 auto;padding:12px 12px 40px}
+#sl{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:8px 0;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+#sl b{font-size:12px;color:var(--mu);margin-right:4px}
+.chip{border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:14px;padding:3px 11px;cursor:pointer;font:inherit;font-size:12px}
+.chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
+h2{font-size:17px;margin:26px 0 8px;border-left:4px solid var(--ac);padding-left:8px}
+.g{display:grid;gap:10px}.k{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.c2{grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
+.cd{background:var(--cd);border:1px solid var(--bd);border-radius:6px;padding:12px;min-width:0}
+.cd h3{margin:0 0 8px;font-size:13px;color:var(--mu);font-weight:600}
+.kp{font-size:24px;font-weight:700}.kp small{display:block;font-size:11px;font-weight:400;color:var(--mu)}
+.hb{display:grid;grid-template-columns:minmax(80px,38%) 1fr auto;gap:8px;align-items:center;margin:4px 0;font-size:12px}
+.hb .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tr{background:var(--bd);height:12px;border-radius:3px}.tr i{display:block;height:100%;border-radius:3px}
+.cols{display:flex;gap:4px;align-items:flex-end;height:170px}.col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:10px;min-width:0;cursor:default}
+.col b{font-weight:600;font-size:9px;white-space:nowrap}.bar{width:100%;flex:1;display:flex;align-items:flex-end}.bar i{width:100%;background:var(--ac);border-radius:3px 3px 0 0;min-height:2px}
+.col.off .bar i{background:var(--bd)}.col[data-k]{cursor:pointer}
+.ins li{margin:6px 0}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:5px 6px;border-bottom:1px solid var(--bd);text-align:right}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+.mu{color:var(--mu);font-size:12px}
+</style></head><body>
+<header><h1>🍽️ Restaurante El Buen Sazón</h1><p>Informe de análisis descriptivo de ventas, productos, clientes, costos y eventos · <span id="per"></span></p></header>
+__BARRA__<main>
+<div id="sl"></div>
+<div class="g k" id="kp"></div>
+
+<h2>Ventas en el tiempo</h2>
+<div class="g c2">
+<div class="cd"><h3>Ingresos por mes (clic para filtrar)</h3><div class="cols" id="cm"></div></div>
+<div class="cd"><h3>Canal de venta</h3><div id="cc"></div></div>
+<div class="cd"><h3>Ventas por hora del día</h3><div class="cols" id="ch"></div></div>
+<div class="cd"><h3>Ventas por día de la semana</h3><div class="cols" id="cd"></div></div>
+</div>
+
+<h2>Hallazgos del periodo completo</h2>
+<div class="cd"><ul class="ins" id="ins"></ul></div>
+
+<h2>Productos</h2>
+<div class="g c2">
+<div class="cd"><h3>Ingresos por producto</h3><div id="pi"></div></div>
+<div class="cd"><h3>Margen bruto por producto (%)</h3><div id="pm"></div></div>
+<div class="cd"><h3>% de ventas que incluyen cada categoría</h3><div id="pa"></div></div>
+</div>
+
+<h2>Clientes y equipo</h2>
+<div class="g c2">
+<div class="cd"><h3>Top 10 clientes por ingresos</h3><div id="kc"></div></div>
+<div class="cd"><h3>Ingresos gestionados por empleado</h3><div id="ke"></div></div>
+</div>
+
+<h2>Rentabilidad</h2>
+<div class="g c2">
+<div class="cd"><h3>Resultado del periodo seleccionado</h3><div id="rp"></div></div>
+<div class="cd"><h3>Gastos operativos por concepto</h3><div id="ro"></div></div>
+</div>
+
+<h2>Eventos</h2>
+<div class="g c2">
+<div class="cd"><h3>Eventos ejecutados</h3><table id="ev"></table></div>
+<div class="cd"><h3>Tipos de evento (eventos ejecutados)</h3><div id="te"></div></div>
+</div>
+<p class="mu">Datos leídos de PostgreSQL (esquema ventas) con las consultas de analisis_descriptivo.py. Margen bruto = ingresos − costo de producción; utilidad = margen bruto − gastos operativos. Los eventos se analizan aparte del restaurante.</p>
+</main>
+<script>
+const D=__DATA__,$=s=>document.querySelector(s),MS=D.meses;let sel=new Set(MS);
+const MN=["","ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"],DN=["","Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+const num=n=>Math.round(n).toLocaleString("es-CO"),cop=n=>Math.abs(n)>=1e6?"$"+(n/1e6).toFixed(1).replace(".",",")+" M":"$"+num(n),pc=n=>n.toFixed(1).replace(".",",")+" %";
+const F=a=>a.filter(r=>sel.has(r.m)),S=(a,k)=>a.reduce((s,r)=>s+r[k],0);
+function G(a,key,vals){const m=new Map();for(const r of a){let o=m.get(r[key]);if(!o){o={k:r[key]};vals.forEach(v=>o[v]=0);m.set(r[key],o)}vals.forEach(v=>o[v]+=r[v]);for(const x in r)if(!(x in o))o[x]=r[x]}return[...m.values()]}
+function hb(id,it,fmt){const mx=Math.max(...it.map(i=>Math.abs(i.v)),1);$(id).innerHTML=it.map(i=>`<div class="hb"><span class="l" title="${i.l}">${i.l}</span><div class="tr"><i style="width:${Math.abs(i.v)/mx*100}%;background:${i.c||"var(--ac)"}"></i></div><b>${fmt(i.v)}</b></div>`).join("")||'<p class="mu">Sin datos</p>'}
+function cl(id,it,fmt){const mx=Math.max(...it.map(i=>i.v),1);$(id).innerHTML=it.map(i=>`<div class="col${i.off?" off":""}"${i.k?` data-k="${i.k}"`:""}><b>${fmt(i.v)}</b><div class="bar"><i style="height:${i.v/mx*100}%"></i></div><span>${i.l}</span></div>`).join("")}
+const CC={Desayuno:"#e8a33d",Almuerzo:"#c4581b",Gaseosa:"#118dff",Cerveza:"#8a5a00",Acompañante:"#12a579"};
+function draw(){
+ const mc=F(D.mc),ing=S(mc,"i"),vt=S(mc,"v"),cp=S(F(D.cp),"k"),op=S(F(D.op),"a"),ut=ing-cp-op;
+ $("#sl").innerHTML="<b>Mes:</b>"+MS.map(m=>`<button class="chip${sel.has(m)?" on":""}" data-m="${m}">${MN[+m.slice(5)]} ${m.slice(2,4)}</button>`).join("")+'<button class="chip" data-m="*">Todos</button>';
+ const K=[["Ingresos",cop(ing)],["Ventas",num(vt)],["Ticket promedio",cop(vt?ing/vt:0)],["Costo de producción",cop(cp)],["Gastos operativos",cop(op)],["Utilidad",cop(ut)],["Margen neto",pc(ing?100*ut/ing:0)]];
+ $("#kp").innerHTML=K.map(([a,b])=>`<div class="cd"><div class="kp">${b}<small>${a}</small></div></div>`).join("");
+ const pm=G(D.mc,"m",["i"]);cl("#cm",pm.map(r=>({l:MN[+r.k.slice(5)],v:r.i,k:r.k,off:!sel.has(r.k)})),cop);
+ const ca=G(mc,"canal",["v","i"]);hb("#cc",ca.map(r=>({l:`${r.k} · ${num(r.v)} ventas · ticket ${cop(r.i/r.v)}`,v:r.i,c:r.k=="Local"?"var(--ac)":"var(--bl)"})),cop);
+ cl("#ch",G(F(D.h),"h",["v"]).sort((a,b)=>a.k-b.k).map(r=>({l:r.k+"h",v:r.v})),num);
+ cl("#cd",G(F(D.d),"d",["v"]).sort((a,b)=>a.k-b.k).map(r=>({l:DN[r.k],v:r.v})),num);
+ const cst={};D.cp.filter(r=>sel.has(r.m)).forEach(r=>cst[r.id]=(cst[r.id]||0)+r.k);
+ const pr=G(F(D.p),"id",["u","i"]).map(r=>({...r,k:cst[r.k]||0}));
+ hb("#pi",pr.sort((a,b)=>b.i-a.i).map(r=>({l:r.n,v:r.i,c:CC[r.c]})),cop);
+ hb("#pm",pr.filter(r=>r.i).map(r=>({l:r.n,v:100*(r.i-r.k)/r.i,c:CC[r.c]})).sort((a,b)=>b.v-a.v),pc);
+ const ac=G(F(D.cv),"c",["v"]);hb("#pa",ac.map(r=>({l:r.k,v:100*r.v/(vt||1),c:CC[r.k]})).sort((a,b)=>b.v-a.v),pc);
+ hb("#kc",G(F(D.cli),"n",["v","i"]).sort((a,b)=>b.i-a.i).slice(0,10).map(r=>({l:r.k,v:r.i})),cop);
+ hb("#ke",G(F(D.emp),"n",["v","i"]).sort((a,b)=>b.i-a.i).map(r=>({l:`${r.k} (${r.g})`,v:r.i,c:"var(--bl)"})),cop);
+ hb("#rp",[{l:"Ingresos",v:ing,c:"var(--bl)"},{l:"Costo de producción",v:cp,c:"var(--rd)"},{l:"Gastos operativos",v:op,c:"var(--rd)"},{l:"Utilidad",v:ut,c:"var(--ok)"}],cop);
+ hb("#ro",G(F(D.op),"c",["a"]).sort((a,b)=>b.a-a.a).map(r=>({l:r.k,v:r.a,c:"#8a5a00"})),cop)
+}
+document.addEventListener("click",e=>{const m=e.target.closest("[data-m],[data-k]");if(!m)return;const k=m.dataset.m||m.dataset.k;
+ if(k=="*")sel=new Set(MS);else if(sel.has(k)){if(sel.size>1)sel.delete(k)}else sel.add(k);draw()});
+$("#per").textContent=D.per;$("#ins").innerHTML=D.ins.map(t=>`<li>${t}</li>`).join("");
+$("#ev").innerHTML="<tr><th>Tipo</th><th>Fecha</th><th>Valor</th><th>Costo</th><th>Utilidad</th></tr>"+D.ev.map(r=>`<tr><td>${r.tipo}</td><td>${r.fecha}</td><td>${cop(r.valor)}</td><td>${cop(r.costo)}</td><td>${cop(r.valor-r.costo)} (${pc(100*(r.valor-r.costo)/r.valor)})</td></tr>`).join("");
+hb("#te",D.te.map(r=>({l:r.tipo,v:r.n,c:"var(--bl)"})),num);
+draw();
+</script></body></html>

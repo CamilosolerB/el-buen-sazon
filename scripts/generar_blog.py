@@ -5,10 +5,14 @@ Usa la conexión y consultas de analisis_descriptivo.py, agrega consultas propia
 construye DataFrames con pandas y escribe blog_el_buen_sazon.html.
 Uso: PGPASSWORD=clave python generar_blog.py"""
 import sys, pathlib; sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-import html, calendar, datetime as dt
+import html, calendar, datetime as dt, re, time, inspect
 import pandas as pd
 from sqlalchemy import text
-from app.analisis import conectar, extraer, cop, ent, DIAS, MESES
+from app.db import conectar, extraer, QUERIES
+from app.informe import cop, ent, DIAS, MESES
+
+BASE = pathlib.Path(__file__).resolve().parent.parent
+ARCHIVO_SQL = BASE / "database" / "03_consultas.sql"
 
 EXTRA = {
 # Todos los tickets para estadísticos descriptivos por canal (describe()).
@@ -55,10 +59,116 @@ def kpi(n, titulo, nombre, df, tab, graf, concl):
     return (f'<article><h3>KPI {n} · {titulo}</h3><p class="df">DataFrame <code>{nombre}</code> · {df.shape[0]} filas × {df.shape[1]} columnas</p>'
             f'{tab}<div class="ch">{graf}</div><p class="cn"><b>Conclusión.</b> {concl}</p></article>')
 
+# ---------------------------------------------------------------------------
+# Bloques de código estilo carbon.now.sh (autocontenido: sin CDN ni librerías)
+# ---------------------------------------------------------------------------
+PALABRAS = {
+ "sql": "SELECT|FROM|WHERE|GROUP|BY|ORDER|LIMIT|OFFSET|JOIN|LEFT|RIGHT|INNER|OUTER|ON|AS|AND|OR|NOT|IN|IS|NULL|"
+        "DISTINCT|UNION|ALL|CASE|WHEN|THEN|ELSE|END|BETWEEN|LIKE|ASC|DESC|WITHIN|OVER|PARTITION|INTERVAL|"
+        "COUNT|SUM|AVG|MIN|MAX|COALESCE|PERCENTILE_CONT|STDDEV_SAMP|TO_CHAR|DATE_TRUNC|EXTRACT|REGEXP_REPLACE|CAST|ROUND",
+ "python": "def|return|import|from|as|if|elif|else|for|while|in|not|and|or|None|True|False|lambda|with|try|except|"
+           "class|print|open|len|range|str|int|float|list|dict|set|enumerate|sorted|max|min|sum|abs|round|yield|global",
+}
+PATRONES = {k: re.compile(
+    r"(?P<c>--[^\n]*|#[^\n]*)"
+    r"|(?P<s>'''[\s\S]*?'''|\"\"\"[\s\S]*?\"\"\"|'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\")"
+    rf"|(?P<k>\b(?:{PALABRAS[k]})\b)"
+    r"|(?P<n>\b\d+(?:\.\d+)?\b)") for k in PALABRAS}
+
+def _linea(ln, lang):
+    """Aplica resaltado de sintaxis a una línea ya sin escapar y devuelve su HTML."""
+    pat, pos, out = PATRONES[lang], 0, []
+    for m in pat.finditer(ln):
+        out.append(html.escape(ln[pos:m.start()]))
+        out.append(f'<span class="t-{m.lastgroup}">{html.escape(m.group(0))}</span>')
+        pos = m.end()
+    out.append(html.escape(ln[pos:]))
+    return "".join(out)
+
+def carbon(code, archivo, lang="sql"):
+    """Bloque carbon: panel oscuro, semáforo, nombre de archivo, números de línea y resaltado."""
+    lineas = [_linea(l, lang) for l in code.strip("\n").split("\n")]
+    cuerpo = "".join(f'<span class="ln">{n}</span>{l}\n' for n, l in enumerate(lineas, 1))
+    return (f'<div class="carbon"><div class="cb-top"><span class="cb-dots"><i></i><i></i><i></i></span>'
+            f'<span class="cb-file">{html.escape(archivo)}</span><span class="cb-lang">{lang.upper()}</span></div>'
+            f'<pre class="cb-code"><code>{cuerpo}</code></pre></div>')
+
+def fm_resultado(df):
+    """Formato numérico automático para las tablas de resultado (es-CO)."""
+    dec = lambda v: f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    fm = {}
+    for c in df.columns:
+        s = df[c].dropna()
+        if not len(s): continue
+        v = s.iloc[0]
+        if pd.api.types.is_integer_dtype(df[c]): fm[c] = ent
+        elif pd.api.types.is_float_dtype(df[c]): fm[c] = dec
+        elif hasattr(v, "strftime"): fm[c] = lambda x: x.strftime("%Y-%m-%d")
+        else: fm[c] = lambda x: html.escape(str(x))
+    return fm
+
+def tabla_resultado(df, limite=12):
+    """Tabla del resultado (primeras `limite` filas) con nota cuando se trunca o no hay filas."""
+    visto = df.head(limite)
+    t = tabla(visto, fm_resultado(visto))
+    if not len(df):
+        t += '<p class="nt"><b>0 filas:</b> la consulta no devuelve resultados (no hay casos que listar).</p>'
+    elif len(df) > len(visto):
+        t += f'<p class="nt">Mostrando las primeras {len(visto)} de {len(df)} filas.</p>'
+    return t
+
+def leer_consultas():
+    """Parsea database/03_consultas.sql y devuelve [(número, título, SQL), ...] (26 consultas)."""
+    partes = re.split(r"(?m)^--\s*(\d+)\.\s*(.+)$", ARCHIVO_SQL.read_text(encoding="utf-8"))
+    return [(int(partes[i]), partes[i + 1].strip(), partes[i + 2].strip())
+            for i in range(1, len(partes), 3)]
+
+# Agrupación temática de las 26 consultas (número -> sección del blog)
+GRUPOS = [
+ ("Ventas y demanda", "g-ventas", [1, 2, 3, 4, 5]),
+ ("Clientes, empleados y domicilios", "g-clientes", [6, 7, 8, 13, 14, 15, 16]),
+ ("Productos y categorías", "g-productos", [9, 10, 11, 12, 17]),
+ ("Consistencia de los datos", "g-calidad", [18]),
+ ("Eventos", "g-eventos", [19, 20, 21]),
+ ("Costos y rentabilidad", "g-costos", [22, 23, 24, 25, 26]),
+]
+
+def ejecutar_consultas(cn, consultas):
+    """Ejecuta cada consulta y devuelve el HTML: bloque carbon + resultado."""
+    htmls = {}
+    for num, titulo, sql in consultas:
+        t0 = time.perf_counter()
+        df = pd.read_sql(text(sql), cn)
+        ms = int((time.perf_counter() - t0) * 1000)
+        meta = (f'<p class="df">Resultado · DataFrame <code>consulta_{num:02d}</code> · '
+                f'{len(df)} fila{"s" if len(df) != 1 else ""} × {df.shape[1]} columnas · {ms} ms</p>')
+        htmls[num] = (f'<article class="q"><h4 id="q{num}">Consulta {num} · {html.escape(titulo)}</h4>'
+                      f'{carbon(sql, "03_consultas.sql", "sql")}{meta}{tabla_resultado(df)}</article>')
+        print(f"  consulta {num:2d}/26 {titulo[:40]:42s} -> {len(df):5d} filas · {ms} ms")
+    return htmls
+
+def secciones_consultas(htmls):
+    """Agrupa las consultas por tema con anclas navegables."""
+    out = []
+    for titulo, cid, nums in GRUPOS:
+        usados = [n for n in nums if n in htmls]
+        if not usados: continue
+        out.append(f'<h4 class="gq" id="{cid}">{titulo} <span class="nt">({len(usados)} consultas)</span></h4>')
+        out += [htmls[n] for n in sorted(usados)]
+    faltan = sorted(set(htmls) - {n for _, _, ns in GRUPOS for n in ns})
+    out += [htmls[n] for n in faltan]
+    return "".join(out)
+
+
 def main():
     eng = conectar(); d = extraer(eng)
     with eng.connect() as cn:
         for k, q in EXTRA.items(): d[k] = pd.read_sql(text(q), cn)
+        qhtml = secciones_consultas(ejecutar_consultas(cn, leer_consultas()))
+    # código mostrado en Carbon (se calcula antes del f-string: sus fuentes llaman {})
+    src_con = carbon(inspect.getsource(conectar), "app/db.py", "python")
+    src_ext = carbon(inspect.getsource(extraer), "app/db.py", "python")
+    src_snip = carbon(SNIPPET, "conexion_ejemplo.py", "python")
     k = d["kpi"].iloc[0]; desde, hasta = pd.Timestamp(k.desde), pd.Timestamp(k.hasta)
     mc = d["mes_canal"]; ING = mc.i.sum(); VT = mc.v.sum()
 
@@ -168,12 +278,12 @@ def main():
            "domicilio": ("Original", "Entregas de ventas a domicilio"), "tipo_evento": ("Simulado", "Catálogo de tipos de evento"), "evento": ("Mixto", "Eventos ejecutados (máx. 3)"),
            "venta": ("Original", "Cabecera de la venta"), "detalle_venta": ("Mixto", "Líneas de la venta"), "costo": ("Simulado", "Costos de producción, operativos y de evento")}
     df_tab = pd.DataFrame([(t, tt[t], *ORI[t]) for t in ORI], columns=["tabla", "registros", "origen", "descripción"])
-    mer = open("docs/modelo_relacional.mermaid", encoding="utf-8").read().split("---", 2)[-1].strip()
+    mer = (BASE / "docs" / "modelo_relacional.mermaid").read_text(encoding="utf-8").split("---", 2)[-1].strip()
     cfg = d["kpi"].iloc[0]
     body = f'''<header><p>Business Intelligence 801SIS · Ingeniería de Sistemas · Universidad de Cundinamarca · Ing. Ivon Forero</p>
 <h1>Análisis descriptivo del proyecto de aula: Restaurante El Buen Sazón</h1>
 <p>Camilo Soler · Sebastián Valencia · Juan Acevedo · Wilson Cristancho · Santiago Mahecha</p></header>
-<nav><a href="#s1">1. Modelo de negocio</a><a href="#s2">2. Proceso foco</a><a href="#s3">3. Conjunto de datos</a><a href="#s4">4. Indicadores (KPIs)</a><a href="#s5">5. Diagnóstico</a></nav>
+<nav><a href="#s1">1. Modelo de negocio</a><a href="#s2">2. Proceso foco</a><a href="#s3">3. Conjunto de datos</a><a href="#qsql">26 consultas</a><a href="#s4">4. Indicadores (KPIs)</a><a href="#s5">5. Diagnóstico</a></nav>
 <main>
 <section id="s1"><h2>1. Contextualización del modelo de negocio</h2>
 <p><b>Nombre y sector.</b> Restaurante El Buen Sazón, negocio del sector gastronómico (servicio de alimentos) ubicado en Facatativá, Cundinamarca. Ofrece desayunos y almuerzos de comida casera, bebidas y acompañantes, con venta en el local y a domicilio, y reserva de eventos.</p>
@@ -190,8 +300,13 @@ def main():
 {tabla(df_tab, {"registros": ent})}
 <p class="nt"><b>Nota sobre los datos.</b> Clientes, empleados, domicilios y ventas provienen del conjunto de datos original del proyecto. Los costos, los tipos de evento, el evento 3, los valores de los eventos y los productos nuevos (con sus líneas de venta) fueron simulados para completar el análisis de rentabilidad; por eso las conclusiones sobre costos son ilustrativas. Se validaron 26 consultas SQL (resumen de ventas, por canal, día, mes y hora, clientes, empleados, productos, eventos, costos y rentabilidad).</p>
 <h3>Conexión de la base de datos con Python</h3>
-<p>El gestor es PostgreSQL, por eso se usa <b>SQLAlchemy</b> con el controlador <b>psycopg2</b> y <b>pandas</b>. El proceso técnico es: (1) crear el <i>engine</i> con las credenciales (variables de entorno); (2) ejecutar cada consulta SQL con <code>pd.read_sql</code>, que devuelve un DataFrame; (3) transformar con pandas (<code>groupby</code>, <code>merge</code>, <code>describe</code>) para calcular los estadísticos; (4) presentar tablas, gráficos y conclusiones. Se ejecutaron {len(QUERIES_N)+len(EXTRA)} consultas y se construyeron 10 DataFrames.</p>
-<pre><code>{html.escape(SNIPPET)}</code></pre></section>
+<p>El gestor es PostgreSQL, por eso se usa <b>SQLAlchemy</b> con el controlador <b>psycopg2</b> y <b>pandas</b>. El proceso técnico es: (1) crear el <i>engine</i> con las credenciales de la variable de entorno <code>DATABASE_URL</code> (cargada con <code>python-dotenv</code>); (2) ejecutar cada consulta SQL con <code>pd.read_sql</code>, que devuelve un DataFrame; (3) transformar con pandas (<code>groupby</code>, <code>merge</code>, <code>describe</code>) para calcular los estadísticos; (4) presentar tablas, gráficos y conclusiones. Se ejecutaron {len(QUERIES)} consultas del informe y {len(EXTRA)} adicionales del blog, además de las 26 consultas validadas de la sustentación (se muestran completas más abajo), para construir 10 DataFrames.</p>
+{src_con}{src_ext}
+<p class="nt">Ejemplo mínimo de conexión y primera consulta:</p>
+{src_snip}
+<h3 id="qsql">Consultas SQL validadas en la sustentación (26) y su resultado</h3>
+<p>Las 26 consultas de <code>database/03_consultas.sql</code> se ejecutan una a una contra Supabase; cada bloque muestra el código fuente y, debajo, el DataFrame resultante (primeras 12 filas, con el total de filas y el tiempo de ejecución).</p>
+{qhtml}</section>
 <section id="s4"><h2>4. Análisis de indicadores (KPIs)</h2>
 <p>Periodo: {cfg.desde} a {cfg.hasta} · {ent(k.ventas)} ventas · {cop(ING)} en ingresos · ticket promedio {m0(k.ticket_prom)} · {int(k.clientes)} clientes activos.</p>
 {t1}{t2}{t3}{t4}{t5}{t6}{t7}{t8}{t9}{t10}</section>
@@ -199,11 +314,19 @@ def main():
 {tabla(diag)}
 <p class="cn"><b>Conclusión general.</b> El restaurante tiene una demanda estable y un buen volumen de ventas, pero su rentabilidad es ajustada ({pc(100*UT/ING)} de margen neto). Las mayores oportunidades están en aumentar el ticket con venta cruzada, aprovechar las horas valle, proteger a los clientes más fiables y registrar costos reales para decidir con datos.</p></section></main>
 <footer>Datos extraídos de PostgreSQL con Python (pandas + SQLAlchemy). Proyecto de aula · Octubre de 2026.</footer>'''
-    open("blog_el_buen_sazon.html", "w", encoding="utf-8").write(HEAD + body + "</body></html>")
-    print("blog_el_buen_sazon.html", len(body) // 1024, "KB")
+    out_root = BASE / "blog_el_buen_sazon.html"
+    out_app = BASE / "app" / "static" / "blog.html"
+    out_app.parent.mkdir(exist_ok=True)
+    doc = HEAD + body + SCRIPT + "</body></html>"
+    for ruta in (out_root, out_app):
+        ruta.write_text(doc, encoding="utf-8")
+        print(f"{ruta.relative_to(BASE)}  {len(doc) // 1024} KB")
 
-from app.analisis import QUERIES
-QUERIES_N = QUERIES
+SCRIPT = '''<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+mermaid.initialize({startOnLoad:true, theme:"neutral", securityLevel:"loose"});
+</script>
+'''
 HEAD = '''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Blog · Análisis descriptivo · Restaurante El Buen Sazón</title><style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#faf7f4;--cd:#fff;--tx:#2b2523;--mu:#6b625d;--ac:#c4581b;--bl:#118dff;--ok:#12a579;--bd:#e6dfd9}
@@ -218,6 +341,19 @@ article{background:var(--cd);border:1px solid var(--bd);border-radius:8px;paddin
 .ch{margin:12px 0}.hb div{display:grid;grid-template-columns:minmax(90px,32%) 1fr auto;gap:8px;align-items:center;font:12px sans-serif;margin:3px 0}.hb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hb i{background:var(--bd);height:12px;border-radius:3px;display:block}.hb b{display:block;height:100%;border-radius:3px}.hb em{font-style:normal;font-weight:600}
 .vb{display:flex;gap:3px;align-items:flex-end;height:170px}.vb div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font:9px sans-serif;min-width:0}.vb i{flex:1;width:100%;display:flex;align-items:flex-end}.vb b{display:block;width:100%;background:var(--ac);border-radius:3px 3px 0 0;min-height:2px}.vb em{font-style:normal;font-weight:600}
 .cn{background:var(--bd);border-left:4px solid var(--ac);padding:8px 12px;border-radius:4px;font-size:15px}.nt{font-size:14px;color:var(--mu)}
+.carbon{margin:10px 0 6px;border-radius:8px;overflow:hidden;box-shadow:0 3px 14px rgba(0,0,0,.28);background:#282c34}
+.cb-top{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#21252b}
+.cb-dots i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px}
+.cb-dots i:nth-child(1){background:#ff5f56}.cb-dots i:nth-child(2){background:#ffbd2e}.cb-dots i:nth-child(3){background:#27c93f}
+.cb-file{flex:1;text-align:center;font:12px/1.2 ui-monospace,Consolas,monospace;color:#9da5b4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cb-lang{font:10px/1.2 ui-monospace,Consolas,monospace;color:#5f6672;letter-spacing:1.5px}
+pre.cb-code{margin:0;background:#282c34;color:#d6deeb;padding:12px 10px;font:12.5px/1.55 ui-monospace,Consolas,"Cascadia Mono",monospace;overflow-x:auto}
+pre.cb-code code{background:none;padding:0;color:inherit;font-size:inherit}
+.cb-code .ln{display:inline-block;width:2.4em;padding-right:.9em;text-align:right;color:#4b5263;user-select:none}
+.t-c{color:#5c6370;font-style:italic}.t-s{color:#98c379}.t-k{color:#c678dd}.t-n{color:#d19a66}
+.q{background:var(--cd);border:1px solid var(--bd);border-radius:8px;padding:2px 14px 12px;margin:14px 0}
+.q h4{margin:14px 0 8px;font-size:15px}
+.gq{margin:28px 0 4px;padding:7px 10px;background:var(--bd);border-left:4px solid var(--ac);border-radius:4px;font-size:16px}
 pre{background:#1e1e1e;color:#e6e6e6;padding:12px;border-radius:6px;overflow-x:auto;font-size:12.5px;line-height:1.45}pre.mermaid{background:var(--cd);color:var(--tx);text-align:center}
 footer{text-align:center;font:12px sans-serif;color:var(--mu);padding:16px}
 </style></head><body>'''

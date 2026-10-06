@@ -1,21 +1,25 @@
 """Sistema de información - Restaurante El Buen Sazón (FastAPI).
 Lee la base de datos en cada consulta (con caché corta), calcula el análisis con pandas
 y sirve el informe web. Ejecutar: uvicorn app.main:app --reload"""
-import os, json, time, threading
+import os, time, threading
 from datetime import datetime
+from pathlib import Path
 from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 load_dotenv()
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy import text
-from app.analisis import conectar, extraer, construir, PLANTILLA
+from app.informe import construir, renderizar
+from app.db import conectar, extraer
 
 app = FastAPI(title="El Buen Sazón · Sistema de información", version="1.0")
 TTL = int(os.getenv("CACHE_SEGUNDOS", "60"))          # segundos antes de volver a consultar la BD
 _lock, _motor, _cache = threading.Lock(), None, {"t": 0.0, "datos": None, "hora": ""}
 BARRA = ('<div style="background:#fff3e8;color:#7a2e0c;font:12px sans-serif;padding:6px 14px;text-align:right">'
-         'Datos en vivo desde Supabase · actualizado {hora} · <a href="/?refrescar=1">Actualizar ahora</a> · <a href="/docs">API</a></div>')
+         'Datos en vivo desde Supabase · actualizado {hora} · <a href="/?refrescar=1">Actualizar ahora</a> · '
+         '<a href="/blog">Blog del proyecto</a> · <a href="/docs">API</a></div>')
+BLOG = Path(__file__).resolve().parent / "static" / "blog.html"
 
 def motor():
     global _motor
@@ -35,8 +39,15 @@ def informe(refrescar: int = 0):
     try: datos, hora = obtener(bool(refrescar))
     except Exception as e:
         return HTMLResponse(f"<h2>No se pudo consultar la base de datos</h2><p>{type(e).__name__}. Revise DATABASE_URL.</p>", 503)
-    html = PLANTILLA.replace("__DATA__", json.dumps(datos, ensure_ascii=False, default=float))
-    return html.replace("<main>", BARRA.format(hora=hora) + "<main>", 1)
+    return renderizar(datos, BARRA.format(hora=hora))
+
+@app.get("/blog", response_class=HTMLResponse)
+def blog():
+    """Blog estático del proyecto de aula (se genera con scripts/generar_blog.py)."""
+    if not BLOG.exists():
+        return HTMLResponse("<h2>Blog aún no generado</h2><p>Ejecute <code>python scripts/generar_blog.py</code> y vuelva a cargar esta página.</p>", 404)
+    if not hasattr(blog, "_html"): blog._html = BLOG.read_text(encoding="utf-8")
+    return blog._html
 
 @app.get("/api/resumen")
 def resumen():
